@@ -75,3 +75,35 @@ class Chicken(PhysicsEntity):
                 self.set_action('idle_down')
         super().update(movement=movement)
 
+
+class Rooster(PhysicsEntity):
+    def __init__(self, game, pos, size):
+        super().__init__(game, 'rooster', pos, size)
+
+    def update(self, movement=(0, 0)):
+        if movement[0] != 0:
+            self.set_action('run_right')
+        elif movement[1] > 0:
+            self.set_action('run_down')
+        elif movement[1] < 0:
+            self.set_action('run_up')
+        elif self.last_movement[0] != 0:
+            self.set_action('idle_right')
+        elif self.last_movement[1] > 0:
+            self.set_action('idle_down')
+        elif self.last_movement[1] < 0:
+            self.set_action('idle_up')
+        else:
+            x = random.randint(1, 2000)
+            if x == 1:
+                self.set_action('idle_up')
+            elif x == 2:
+                self.flip = False
+                self.set_action('idle_right')
+            elif x == 3:
+                self.flip = True
+                self.set_action('idle_right')
+            elif x == 4:
+                self.set_action('idle_down')
+        super().update(movement=movement)
+

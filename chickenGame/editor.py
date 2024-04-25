@@ -11,8 +11,10 @@ class Editor:
         pygame.display.set_caption('editor')
 
         self.screen = pygame.display.set_mode((720, 720))
-        self.display = pygame.Surface((720, 720))
+        self.display = pygame.Surface((180, 180))
         self.clock = pygame.time.Clock()
+
+        self.size_factor = 4
 
         self.assets = {
             'grass': load_images('tiles/grass'),
@@ -37,9 +39,13 @@ class Editor:
         self.right_clicking = False
         self.shift = False
         self.ongrid = True
+        self.rect_width = 60
 
     def run(self):
+        resolutions = [60, 80, 100, 140, 180, 240, 300, 400, 500, 600, 720]
+        counter = 0
         while True:
+
             self.display.fill((0, 0, 0))
 
             self.scroll[0] += (self.movement[1] - self.movement[0]) * 2
@@ -52,7 +58,7 @@ class Editor:
             current_tile_img.set_alpha(100)
 
             mouse_pos = pygame.mouse.get_pos()
-            mouse_pos = (mouse_pos[0], mouse_pos[1])
+            mouse_pos = (mouse_pos[0] / self.size_factor, mouse_pos[1] / self.size_factor)
             tile_pos = (int((mouse_pos[0] + self.scroll[0]) // self.tilemap.tile_size),
                         int((mouse_pos[1] + self.scroll[1]) // self.tilemap.tile_size))
 
@@ -95,6 +101,7 @@ class Editor:
                                 'pos': (mouse_pos[0] + self.scroll[0],
                                         mouse_pos[1] + self.scroll[1])
                             })
+
                     if event.button == 3:
                         self.right_clicking = True
                     if self.shift:
@@ -143,9 +150,21 @@ class Editor:
                         self.movement[2] = False
                     if event.key == pygame.K_s:
                         self.movement[3] = False
+                    if event.key == pygame.K_r:
+                        self.size_factor -= 1
+                        if self.size_factor == 0:
+                            self.size_factor = 4
+                        self.display = pygame.Surface((720 / self.size_factor, 720 / self.size_factor))
+                    if event.key == pygame.K_c:
+                        counter += 1
+                        if counter > len(resolutions)-1:
+                            counter = 0
+                        self.rect_width = resolutions[counter]
+
                     if event.key == pygame.K_LSHIFT:
                         self.shift = False
 
+            pygame.draw.rect(self.display, (255, 0, 0), (0 - render_scroll[0], 0 - render_scroll[1], self.rect_width, self.rect_width), 2)
             self.screen.blit(
                 pygame.transform.scale(self.display, self.screen.get_size()),
                 (0, 0))
@@ -153,7 +172,5 @@ class Editor:
             pygame.display.update()
             self.clock.tick(60)
 
+
 Editor().run()
-
-
-
