@@ -1,8 +1,10 @@
 import pygame
 import sys
+import random
 
 from scripts.utils import load_image, load_images, Animation
 from scripts.entities import PhysicsEntity, Chicken
+from scripts.tilemap import Tilemap
 
 
 class Game:
@@ -10,12 +12,12 @@ class Game:
         pygame.init()
         pygame.display.set_caption('chicken game')
         self.screen = pygame.display.set_mode((1280, 720))
-        self.game_display = pygame.Surface((120, 90), pygame.SRCALPHA)
-        self.sidebar = pygame.Surface((320, 720), pygame.SRCALPHA)
+        self.game_display = pygame.Surface((60, 60), pygame.SRCALPHA)
+        self.sidebar = pygame.Surface((560, 720), pygame.SRCALPHA)
         self.clock = pygame.time.Clock()
 
         self.assets = {
-            'trampled_grass': load_images('tiles/grass'),
+            'grass': load_images('tiles/grass'),
             'chicken': load_image('entities/chicken.png'),
             'chicken/idle_down': Animation(load_images('entities/chicken/idle_down')),
             'chicken/idle_right': Animation(load_images('entities/chicken/idle_right')),
@@ -25,47 +27,59 @@ class Game:
             'chicken/run_up': Animation(load_images('entities/chicken/run_up'))
         }
 
-        self.movement_x = [False, False]
-        self.movement_y = [False, False]
-        self.player = Chicken(self, (0, 0), (16, 16))
+        self.movement = [False, False, False, False]
+        self.player = Chicken(self, (2, 2), (16, 16))
+
+        self.tilemap = Tilemap(self, tile_size=20)
+
+        self.level = 0
+        self.load_level(self.level)
+
+    def load_level(self, map_id):
+        self.tilemap.load('data/maps/' + str(map_id) + '.json')
 
     def run(self):
+        pixels_moved = 0
+        screen_w = 60
+        screen_h = 60
         while True:
             self.screen.fill((0, 0, 0, 0))
             self.game_display.fill((0, 0, 0, 0))
             self.sidebar.fill((90, 0, 0))
 
-            self.player.update((self.movement_x[1] - self.movement_x[0],
-                                self.movement_y[1] - self.movement_y[0]))
+            self.tilemap.render(self.game_display)
+
+            self.player.update((self.movement[1] - self.movement[0],
+                                self.movement[3] - self.movement[2]))
+
+            if any(self.movement):
+                pixels_moved += 1
+            if pixels_moved == 20:
+                self.movement = [False, False, False, False]
+                pixels_moved = 0
             self.player.render(self.game_display)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT:
-                        self.movement_x[0] = True
-                    if event.key == pygame.K_RIGHT:
-                        self.movement_x[1] = True
-                    if event.key == pygame.K_UP:
-                        self.movement_y[0] = True
-                    if event.key == pygame.K_DOWN:
-                        self.movement_y[1] = True
+                    pass
                 if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_LEFT:
-                        self.movement_x[0] = False
-                    if event.key == pygame.K_RIGHT:
-                        self.movement_x[1] = False
-                    if event.key == pygame.K_UP:
-                        self.movement_y[0] = False
-                    if event.key == pygame.K_DOWN:
-                        self.movement_y[1] = False
+                    if event.key == pygame.K_n and pixels_moved == 0:
+                        direction = random.randint(0, 3)
+                        self.movement[direction] = True
+                    if event.key == pygame.K_r:
 
-            print(self.player.action)
+                        if screen_w*2 < 960:
+                            screen_w *= 2
+                            screen_h *= 2
+                            self.game_display = pygame.Surface((screen_w, screen_h), pygame.SRCALPHA)
+                            print(screen_w, screen_h)
 
             self.screen.blit(
-                pygame.transform.scale(self.game_display, (960, 720)), (0, 0))
-            self.screen.blit(self.sidebar, (960, 0))
+                pygame.transform.scale(self.game_display, (720, 720)), (0, 0))
+            self.screen.blit(self.sidebar, (720, 0))
+
             pygame.display.update()
             self.clock.tick(60)
 

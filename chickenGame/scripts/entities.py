@@ -62,7 +62,7 @@ class Chicken(PhysicsEntity):
         elif self.last_movement[1] < 0:
             self.set_action('idle_up')
         else:
-            x = random.randint(1, 1000)
+            x = random.randint(1, 2000)
             if x == 1:
                 self.set_action('idle_up')
             elif x == 2:
