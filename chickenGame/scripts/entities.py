@@ -106,4 +106,3 @@ class Rooster(PhysicsEntity):
             elif x == 4:
                 self.set_action('idle_down')
         super().update(movement=movement)
-
