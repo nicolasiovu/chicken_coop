@@ -11,6 +11,8 @@ class Game:
     def __init__(self):
         pygame.init()
         pygame.display.set_caption('chicken game')
+        pygame.font.init()
+        self.my_font = pygame.font.SysFont('Comic Sans MS', 100)
         self.screen = pygame.display.set_mode((1280, 720))
         self.game_display = pygame.Surface((60, 60), pygame.SRCALPHA)
         self.sidebar = pygame.Surface((560, 720), pygame.SRCALPHA)
@@ -24,20 +26,33 @@ class Game:
         self.assets = {
             'grass': load_images('tiles/grass'),
             'fence': load_images('tiles/placeable'),
+            'timer': load_image('entities/timer.png'),
             'chicken': load_image('entities/chicken.png'),
-            'chicken/idle_down': Animation(load_images('entities/chicken/idle_down')),
-            'chicken/idle_right': Animation(load_images('entities/chicken/idle_right')),
-            'chicken/idle_up': Animation(load_images('entities/chicken/idle_up')),
-            'chicken/run_right': Animation(load_images('entities/chicken/run_right')),
-            'chicken/run_down': Animation(load_images('entities/chicken/run_down')),
+            'chicken/idle_down': Animation(
+                load_images('entities/chicken/idle_down')),
+            'chicken/idle_right': Animation(
+                load_images('entities/chicken/idle_right')),
+            'chicken/idle_up': Animation(
+                load_images('entities/chicken/idle_up')),
+            'chicken/run_right': Animation(
+                load_images('entities/chicken/run_right')),
+            'chicken/run_down': Animation(
+                load_images('entities/chicken/run_down')),
             'chicken/run_up': Animation(load_images('entities/chicken/run_up')),
             'rooster': load_image('entities/chicken.png'),
-            'rooster/idle_down': Animation(load_images('entities/rooster/idle_down')),
-            'rooster/idle_right': Animation(load_images('entities/rooster/idle_right')),
-            'rooster/idle_up': Animation(load_images('entities/rooster/idle_up')),
-            'rooster/run_right': Animation(load_images('entities/rooster/run_right')),
-            'rooster/run_down': Animation(load_images('entities/rooster/run_down')),
-            'rooster/run_up': Animation(load_images('entities/rooster/run_up'))
+            'rooster/idle_down': Animation(
+                load_images('entities/rooster/idle_down')),
+            'rooster/idle_right': Animation(
+                load_images('entities/rooster/idle_right')),
+            'rooster/idle_up': Animation(
+                load_images('entities/rooster/idle_up')),
+            'rooster/run_right': Animation(
+                load_images('entities/rooster/run_right')),
+            'rooster/run_down': Animation(
+                load_images('entities/rooster/run_down')),
+            'rooster/run_up': Animation(load_images('entities/rooster/run_up')),
+            'egg/0': load_image('entities/egg/0.png'),
+            'timers/timer': load_images('entities/timers/timer')
         }
 
         self.selected_fence = 0
@@ -45,6 +60,9 @@ class Game:
         self.movement = [False, False, False, False]
 
         self.chickens = []
+        self.roosters = []
+        self.eggs = []
+        self.money = 0
 
         self.tilemap = Tilemap(self, tile_size=20)
 
@@ -55,9 +73,9 @@ class Game:
         self.tilemap.load('data/maps/' + str(map_id) + '.json')
 
     def run(self):
+        time_to_move = False
         pixels_moved = 0
         size_factor = 720 / self.resolution
-        chicken_movement = []
 
         while True:
             self.screen.fill((0, 0, 0, 0))
@@ -75,21 +93,64 @@ class Game:
             tile_pos = (int((mouse_pos[0]) // self.tilemap.tile_size),
                         int((mouse_pos[1]) // self.tilemap.tile_size))
 
-            self.game_display.blit(current_tile_img, (tile_pos[0] * self.tilemap.tile_size,
-                                                      tile_pos[1] * self.tilemap.tile_size))
+            self.game_display.blit(current_tile_img,
+                                   (tile_pos[0] * self.tilemap.tile_size,
+                                    tile_pos[1] * self.tilemap.tile_size))
 
-            if chicken_movement:
+            if time_to_move:
                 pixels_moved += 1
-                for i in range(len(self.chickens)):
-                    self.chickens[i].update(chicken_movement[i])
+                for chicken in self.chickens:
+                    chicken.update(chicken.movement)
+                    chicken.timer.update(chicken.movement)
+                for rooster in self.roosters:
+                    rooster.update(rooster.movement)
+                    rooster.timer.update(rooster.movement)
             else:
                 for chicken in self.chickens:
                     chicken.update()
+                    chicken.timer.update()
+                    if (0 > chicken.pos[0] or 0 > chicken.pos[1]) or \
+                            (chicken.pos[0] > self.stages[self.stage] or
+                             chicken.pos[1] > self.stages[self.stage]):
+                        self.chickens.remove(chicken)
+                for rooster in self.roosters:
+                    rooster.update()
+                    rooster.timer.update()
+                    if (0 > rooster.pos[0] or 0 > rooster.pos[1]) or \
+                            (rooster.pos[0] > self.stages[self.stage] or
+                             rooster.pos[1] > self.stages[self.stage]):
+                        self.roosters.remove(rooster)
             if pixels_moved == 20:
-                chicken_movement = []
                 pixels_moved = 0
+                time_to_move = False
+                for chicken in self.chickens:
+                    chicken.movement = [0, 0]
+                    if chicken.fertile:
+                        if chicken.timer.progress == 3:
+                            chicken.lay_egg()
+                        else:
+                            chicken.timer.next_img()
+                for rooster in self.roosters:
+                    rooster.movement = [0, 0]
+                    if not rooster.fertile:
+                        rooster.timer.next_img()
+                    if rooster.timer.progress == 3:
+                        rooster.fertile = True
+                    for chicken in self.chickens:
+                        if rooster.pos == chicken.pos:
+                            if rooster.fertile and not chicken.fertile:
+                                rooster.fertilize()
+                                chicken.fertilized()
             for chicken in self.chickens:
                 chicken.render(self.game_display)
+                chicken.timer.render(self.game_display)
+            for rooster in self.roosters:
+                rooster.render(self.game_display)
+                rooster.timer.render(self.game_display)
+            for egg in self.eggs:
+                egg.render(self.game_display)
+                egg.timer.update()
+                egg.timer.render(self.game_display)
             self.tilemap.render_front_fences(self.game_display)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -109,23 +170,50 @@ class Game:
                         pos = (int(mouse_pos[0] // self.tilemap.tile_size),
                                int(mouse_pos[1] // self.tilemap.tile_size))
                         self.tilemap.place_fence(pos, self.selected_fence)
-                if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_n and pixels_moved == 0:
+                    if event.button == 3:
+                        pos = (int(mouse_pos[0]),
+                               int(mouse_pos[1]))
+                        for egg in self.eggs:
+                            print(pos, egg.pos)
+                            if pos[0] in range(egg.pos[0], egg.pos[0] + 16) and \
+                                    pos[1] in range(egg.pos[1], egg.pos[1] + 16):
+                                self.eggs.remove(egg)
+                                self.money += 1
+                if event.type == pygame.KEYUP and pixels_moved == 0:
+                    if event.key == pygame.K_n:
+                        time_to_move = True
                         for chicken in self.chickens:
-                            movement = self.move_chicken(chicken)
-                            chicken_movement.append(movement)
+                            chicken.movement = self.move_chicken(chicken)
+                        for rooster in self.roosters:
+                            rooster.movement = self.move_chicken(rooster)
+                        for egg in self.eggs:
+                            if egg.timer.progress == 3:
+                                egg.hatch()
+                            else:
+                                egg.timer.next_img()
                     if event.key == pygame.K_s:
                         x = int(self.game_display.get_width() / 20)
-                        coordinates = (2 + 20 * random.randint(0, x-1), 2 + 20 * random.randint(0, x-1))
-                        self.chickens.append(Chicken(self, coordinates, (16, 16)))
+                        coordinates = (2 + 20 * random.randint(0, x - 1),
+                                       2 + 20 * random.randint(0, x - 1))
+                        self.chickens.append(
+                            Chicken(self, coordinates, (16, 16)))
+                    if event.key == pygame.K_a:
+                        x = int(self.game_display.get_width() / 20)
+                        coordinates = (2 + 20 * random.randint(0, x - 1),
+                                       2 + 20 * random.randint(0, x - 1))
+                        self.roosters.append(
+                            Rooster(self, coordinates, (16, 16)))
                     if event.key == pygame.K_r:
                         self.stage += 1
                         if self.stage > len(self.stages) - 1:
                             self.stage = 0
                         self.resolution = self.stages[self.stage]
                         size_factor = 720 / self.resolution
-                        self.game_display = pygame.Surface((self.resolution, self.resolution))
+                        self.game_display = pygame.Surface(
+                            (self.resolution, self.resolution))
 
+            text_surface = self.my_font.render(str(self.money), False, (0, 0, 0))
+            self.sidebar.blit(text_surface, (100, 50))
             self.screen.blit(
                 pygame.transform.scale(self.game_display, (720, 720)), (0, 0))
             self.screen.blit(self.sidebar, (720, 0))

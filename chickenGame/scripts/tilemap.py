@@ -79,3 +79,5 @@ class Tilemap:
         if loc in self.tilemap:
             tile = self.tilemap[loc]
             return tile['fence']
+        else:
+            return []
