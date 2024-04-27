@@ -4,6 +4,7 @@ import random
 
 from scripts.utils import load_image, load_images, Animation
 from scripts.entities import PhysicsEntity, Chicken, Rooster
+from scripts.ui import Button
 from scripts.tilemap import Tilemap
 
 
@@ -62,6 +63,10 @@ class Game:
         self.chickens = []
         self.roosters = []
         self.eggs = []
+
+        self.buttons = []
+        self.v_displacement = 0
+
         self.money = 0
 
         self.tilemap = Tilemap(self, tile_size=20)
@@ -78,12 +83,18 @@ class Game:
         size_factor = 720 / self.resolution
 
         while True:
+
             self.screen.fill((0, 0, 0, 0))
             self.game_display.fill((0, 0, 0, 0))
             self.sidebar.fill((90, 0, 0))
 
             self.tilemap.render(self.game_display)
             self.tilemap.render_fences(self.game_display)
+
+            # BUTTONS
+            b = Button(self, "toggle", 150, 150, 100, 100, self.v_displacement)
+            self.buttons.append(b)
+            b.render(self.sidebar)
 
             current_tile_img = self.assets['fence'][self.selected_fence].copy()
             current_tile_img.set_alpha(100)
@@ -154,15 +165,31 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+
                 if event.type == pygame.MOUSEWHEEL:
-                    if event.y > 0:
-                        self.selected_fence -= 1
-                        if self.selected_fence == -1:
-                            self.selected_fence = 3
-                    elif event.y < 0:
-                        self.selected_fence += 1
-                        if self.selected_fence == 4:
-                            self.selected_fence = 0
+                    if mouse_pos[0] <= self.stages[self.stage]:
+                        if event.y > 0:
+                            print(event.y)
+                            self.selected_fence -= 1
+                            if self.selected_fence == -1:
+                                self.selected_fence = 3
+                        elif event.y < 0:
+                            self.selected_fence += 1
+                            if self.selected_fence == 4:
+                                self.selected_fence = 0
+
+                    elif mouse_pos[0] > self.stages[self.stage]:
+                        if event.y > 0:
+                            print("down")
+
+                            self.v_displacement += 100
+                        elif event.y < 0:
+                            print("up")
+
+                            self.v_displacement -= 100
+                        else:
+                            self.v_displacement = 0
+
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         pos = (int(mouse_pos[0] // self.tilemap.tile_size),
