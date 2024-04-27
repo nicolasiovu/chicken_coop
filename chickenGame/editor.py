@@ -73,7 +73,8 @@ class Editor:
                     'type': self.tile_list[self.tile_group],
                     'variant': self.tile_variant,
                     'pos': tile_pos,
-                    'fence': [0, 0, 0, 0]
+                    'fence': [0, 0, 0, 0],
+                    'has_egg': 0
                 }
             if self.right_clicking:
                 tile_loc = str(tile_pos[0]) + ';' + str(tile_pos[1])

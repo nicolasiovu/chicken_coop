@@ -1,9 +1,7 @@
 import json
 import pygame
 
-NEIGHBOR_OFFSET = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0),
-                   (0, 0), (-1, 1), (0, 1), (1, 1)]
-PHYSICS_TILES = {'wall'}
+NEIGHBOR_TILES = [(0, 1), (-1, 0), (0, -1), (1, 0)]
 
 
 class Tilemap:
@@ -78,6 +76,28 @@ class Tilemap:
         loc = str(pos[0]) + ';' + str(pos[1])
         if loc in self.tilemap:
             tile = self.tilemap[loc]
-            return tile['fence']
+            return tile['fence'].copy()
         else:
             return []
+
+    def get_fences_nearby(self, pos):
+        fences = [0, 0, 0, 0]
+        for i in range(len(NEIGHBOR_TILES)):
+            loc = (str(pos[0] + NEIGHBOR_TILES[i][0]) + ';' +
+                   str(pos[1] + NEIGHBOR_TILES[i][1]))
+            if loc in self.tilemap:
+                if self.tilemap[loc]['fence'][(i + 2) % 4] == 1:
+                    fences[i] = 1
+        return fences.copy()
+
+    def get_eggs_nearby(self, pos):
+        eggs = [0, 0, 0, 0]
+        for i in range(len(NEIGHBOR_TILES)):
+            loc = (str(pos[0] + NEIGHBOR_TILES[i][0]) + ';' +
+                   str(pos[1] + NEIGHBOR_TILES[i][1]))
+            if loc in self.tilemap:
+                if self.tilemap[loc]['has_egg'] == 1:
+                    eggs[i] = 1
+        return eggs
+
+

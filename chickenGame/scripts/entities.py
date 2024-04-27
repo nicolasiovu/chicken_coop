@@ -108,6 +108,10 @@ class Chicken(PhysicsEntity):
     def lay_egg(self):
         self.game.eggs.append(Egg(self.game, '0', self.pos, (16, 16),
                                   self.game.assets['egg/0']))
+        loc = (int((self.pos[0]) // self.game.tilemap.tile_size),
+               int((self.pos[1]) // self.game.tilemap.tile_size))
+        loc = str(loc[0]) + ';' + str(loc[1])
+        self.game.tilemap.tilemap[loc]['has_egg'] = 1
         self.timer.next_img()
         self.fertile = False
 
@@ -164,5 +168,10 @@ class Egg:
         surface.blit(self.img, self.pos)
 
     def hatch(self):
+        loc = (int((self.pos[0]) // self.game.tilemap.tile_size),
+               int((self.pos[1]) // self.game.tilemap.tile_size))
+        loc = str(loc[0]) + ';' + str(loc[1])
+        self.game.tilemap.tilemap[loc]['has_egg'] = 0
         self.game.eggs.remove(self)
         self.game.chickens.append(Chicken(self.game, self.pos, (16, 16)))
+

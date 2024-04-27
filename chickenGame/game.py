@@ -126,9 +126,7 @@ class Game:
                 for chicken in self.chickens:
                     chicken.movement = [0, 0]
                     if chicken.fertile:
-                        if chicken.timer.progress == 3:
-                            chicken.lay_egg()
-                        else:
+                        if chicken.timer.progress != 3:
                             chicken.timer.next_img()
                 for rooster in self.roosters:
                     rooster.movement = [0, 0]
@@ -184,6 +182,8 @@ class Game:
                         time_to_move = True
                         for chicken in self.chickens:
                             chicken.movement = self.move_chicken(chicken)
+                            if chicken.fertile and chicken.timer.progress == 3:
+                                chicken.lay_egg()
                         for rooster in self.roosters:
                             rooster.movement = self.move_chicken(rooster)
                         for egg in self.eggs:
@@ -225,6 +225,11 @@ class Game:
         pos = (int(chicken.pos[0] // self.tilemap.tile_size),
                int(chicken.pos[1] // self.tilemap.tile_size))
         fences = self.tilemap.get_fences_on_tile(pos)
+        nearby_fences = self.tilemap.get_fences_nearby(pos)
+        nearby_eggs = self.tilemap.get_eggs_nearby(pos)
+        for i in range(len(fences)):
+            if nearby_fences[i] == 1 or nearby_eggs[i] == 1:
+                fences[i] = 1
         if all([fence == 1 for fence in fences]):
             return 0, 0
         direction = random.randint(0, 3)
