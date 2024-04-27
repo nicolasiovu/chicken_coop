@@ -170,8 +170,10 @@ class Egg:
     def hatch(self):
         loc = (int((self.pos[0]) // self.game.tilemap.tile_size),
                int((self.pos[1]) // self.game.tilemap.tile_size))
+        self.game.eggs.remove(self)
+        new_chicken = Chicken(self.game, self.pos, (16, 16))
+        self.game.tilemap.chicken_here(loc, new_chicken)
+        self.game.chickens.append(new_chicken)
         loc = str(loc[0]) + ';' + str(loc[1])
         self.game.tilemap.tilemap[loc]['has_egg'] = 0
-        self.game.eggs.remove(self)
-        self.game.chickens.append(Chicken(self.game, self.pos, (16, 16)))
 
