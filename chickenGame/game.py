@@ -128,17 +128,25 @@ class Game:
                     if chicken.fertile:
                         if chicken.timer.progress != 3:
                             chicken.timer.next_img()
+                    pos = (int(chicken.pos[0] // self.tilemap.tile_size),
+                           int(chicken.pos[1] // self.tilemap.tile_size))
+                    self.tilemap.chicken_here(pos, chicken)
+
                 for rooster in self.roosters:
                     rooster.movement = [0, 0]
                     if not rooster.fertile:
                         rooster.timer.next_img()
                     if rooster.timer.progress == 3:
                         rooster.fertile = True
+                    pos = (int(rooster.pos[0] // self.tilemap.tile_size),
+                           int(rooster.pos[1] // self.tilemap.tile_size))
+                    self.tilemap.chicken_here(pos, rooster)
                     for chicken in self.chickens:
                         if rooster.pos == chicken.pos:
                             if rooster.fertile and not chicken.fertile:
                                 rooster.fertilize()
                                 chicken.fertilized()
+                self.tilemap.check_overloaded_chickens(self.game_display)
             for chicken in self.chickens:
                 chicken.render(self.game_display)
                 chicken.timer.render(self.game_display)
@@ -172,7 +180,6 @@ class Game:
                         pos = (int(mouse_pos[0]),
                                int(mouse_pos[1]))
                         for egg in self.eggs:
-                            print(pos, egg.pos)
                             if pos[0] in range(egg.pos[0], egg.pos[0] + 16) and \
                                     pos[1] in range(egg.pos[1], egg.pos[1] + 16):
                                 self.eggs.remove(egg)
@@ -180,29 +187,43 @@ class Game:
                 if event.type == pygame.KEYUP and pixels_moved == 0:
                     if event.key == pygame.K_n:
                         time_to_move = True
-                        for chicken in self.chickens:
-                            chicken.movement = self.move_chicken(chicken)
-                            if chicken.fertile and chicken.timer.progress == 3:
-                                chicken.lay_egg()
-                        for rooster in self.roosters:
-                            rooster.movement = self.move_chicken(rooster)
                         for egg in self.eggs:
                             if egg.timer.progress == 3:
                                 egg.hatch()
                             else:
                                 egg.timer.next_img()
+                        for chicken in self.chickens:
+                            chicken.movement = self.move_chicken(chicken)
+                            if chicken.movement != (0, 0):
+                                pos = (int(chicken.pos[0] // self.tilemap.tile_size),
+                                       int(chicken.pos[1] // self.tilemap.tile_size))
+                                self.tilemap.remove_chicken(pos, chicken)
+                            if chicken.fertile and chicken.timer.progress == 3:
+                                chicken.lay_egg()
+                        for rooster in self.roosters:
+                            rooster.movement = self.move_chicken(rooster)
+                            if rooster.movement != (0, 0):
+                                pos = (int(rooster.pos[0] // self.tilemap.tile_size),
+                                       int(rooster.pos[1] // self.tilemap.tile_size))
+                                self.tilemap.remove_chicken(pos, rooster)
                     if event.key == pygame.K_s:
                         x = int(self.game_display.get_width() / 20)
                         coordinates = (2 + 20 * random.randint(0, x - 1),
                                        2 + 20 * random.randint(0, x - 1))
-                        self.chickens.append(
-                            Chicken(self, coordinates, (16, 16)))
+                        pos = (int(coordinates[0] // self.tilemap.tile_size),
+                               int(coordinates[1] // self.tilemap.tile_size))
+                        new_chicken = Chicken(self, coordinates, (16, 16))
+                        self.chickens.append(new_chicken)
+                        self.tilemap.chicken_here(pos, new_chicken)
                     if event.key == pygame.K_a:
                         x = int(self.game_display.get_width() / 20)
                         coordinates = (2 + 20 * random.randint(0, x - 1),
                                        2 + 20 * random.randint(0, x - 1))
-                        self.roosters.append(
-                            Rooster(self, coordinates, (16, 16)))
+                        pos = (int(coordinates[0] // self.tilemap.tile_size),
+                               int(coordinates[1] // self.tilemap.tile_size))
+                        new_rooster = Rooster(self, coordinates, (16, 16))
+                        self.roosters.append(new_rooster)
+                        self.tilemap.chicken_here(pos, new_rooster)
                     if event.key == pygame.K_r:
                         self.stage += 1
                         if self.stage > len(self.stages) - 1:

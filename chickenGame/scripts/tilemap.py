@@ -100,4 +100,30 @@ class Tilemap:
                     eggs[i] = 1
         return eggs
 
+    def chicken_here(self, pos, chicken):
+        loc = str(pos[0]) + ';' + str(pos[1])
+        if loc in self.tilemap:
+            tile = self.tilemap[loc]
+            tile['chickens'].append(chicken)
+
+    def remove_chicken(self, pos, chicken):
+        loc = str(pos[0]) + ';' + str(pos[1])
+        if loc in self.tilemap:
+            tile = self.tilemap[loc]
+            tile['chickens'].remove(chicken)
+
+    def check_overloaded_chickens(self, surface, offset=(0, 0)):
+        for x in range(offset[0] // self.tile_size, (offset[0] + surface.get_width()) // self.tile_size + 1):
+            for y in range(offset[1] // self.tile_size, (offset[1] + surface.get_height()) // self.tile_size + 1):
+                loc = str(x) + ';' + str(y)
+                if loc in self.tilemap:
+                    tile = self.tilemap[loc]
+                    if len(tile['chickens']) >= 3:
+                        for chicken in tile['chickens']:
+                            if chicken.type == 'chicken':
+                                self.game.chickens.remove(chicken)
+                            else:
+                                self.game.roosters.remove(chicken)
+                        tile['chickens'] = []
+
 
