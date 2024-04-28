@@ -81,7 +81,11 @@ class Game:
         time_to_move = False
         pixels_moved = 0
         size_factor = 720 / self.resolution
-
+        b = Button(self, "toggle", True, 150, 150, 100, 100)
+        c = Button(self, "toggle", False, 160, 600, 100, 100)
+        self.buttons.append(b)
+        self.buttons.append(c)
+        mouse_timer = 0
         while True:
 
             self.screen.fill((0, 0, 0, 0))
@@ -92,9 +96,20 @@ class Game:
             self.tilemap.render_fences(self.game_display)
 
             # BUTTONS
-            b = Button(self, "toggle", 150, 150, 100, 100, self.v_displacement)
-            self.buttons.append(b)
-            b.render(self.sidebar)
+
+            if mouse_timer > 0:
+
+                mouse_timer -= 1
+                print(mouse_timer)
+            else:
+                self.v_displacement = 0
+
+                self.v_displacement = 0
+            for button in self.buttons:
+                if button.moveable:
+                    button.render(self.sidebar, self.v_displacement)
+                else:
+                    button.render(self.sidebar, 0)
 
             current_tile_img = self.assets['fence'][self.selected_fence].copy()
             current_tile_img.set_alpha(100)
@@ -107,6 +122,25 @@ class Game:
             self.game_display.blit(current_tile_img,
                                    (tile_pos[0] * self.tilemap.tile_size,
                                     tile_pos[1] * self.tilemap.tile_size))
+
+            print(mouse_pos)
+
+            # outlines for button implementation
+            # next button
+            pygame.draw.rect(self.sidebar, (255, 0, 0),
+                             (25, 600, 200, 100), 2)
+            # buy rooster/chicken button (split in half)
+            pygame.draw.rect(self.sidebar, (255, 0, 0),
+                             (250, 600, 287.5, 100), 2)
+
+            # stats box (like how many roosters you have and chickens)
+            pygame.draw.rect(self.sidebar, (255, 0, 0),
+                             (25, 25, 287.5, 100), 2)
+
+            # money
+            pygame.draw.rect(self.sidebar, (255, 0, 0),
+                             (337.5, 25, 200, 100), 2)
+
 
             if time_to_move:
                 pixels_moved += 1
@@ -177,7 +211,6 @@ class Game:
                 if event.type == pygame.MOUSEWHEEL:
                     if mouse_pos[0] <= self.stages[self.stage]:
                         if event.y > 0:
-                            print(event.y)
                             self.selected_fence -= 1
                             if self.selected_fence == -1:
                                 self.selected_fence = 3
@@ -188,15 +221,13 @@ class Game:
 
                     elif mouse_pos[0] > self.stages[self.stage]:
                         if event.y > 0:
-                            print("down")
-
-                            self.v_displacement += 100
+                            mouse_timer = 30
+                            self.v_displacement = -4
                         elif event.y < 0:
-                            print("up")
+                            mouse_timer = 30
+                            self.v_displacement = 4
 
-                            self.v_displacement -= 100
-                        else:
-                            self.v_displacement = 0
+                    event.y = 0
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
