@@ -70,13 +70,17 @@ class Tilemap:
         loc = str(pos[0]) + ';' + str(pos[1])
         if loc in self.tilemap:
             tile = self.tilemap[loc]
-            tile['fence'][f_type] = 1
+            if tile['fence'][f_type] == 0:
+                tile['fence'][f_type] = 1
+                self.game.money -= 5
 
     def delete_fence(self, pos, f_type):
         loc = str(pos[0]) + ';' + str(pos[1])
         if loc in self.tilemap:
             tile = self.tilemap[loc]
-            tile['fence'][f_type] = 0
+            if tile['fence'][f_type] == 1:
+                tile['fence'][f_type] = 0
+                self.game.money += 2
 
     def get_fences_on_tile(self, pos):
         loc = str(pos[0]) + ';' + str(pos[1])

@@ -27,6 +27,7 @@ class Game:
         self.assets = {
             'grass': load_images('tiles/grass'),
             'fence': load_images('tiles/placeable'),
+            'redfence': load_images('tiles/redplaceable'),
             'timer': load_image('entities/timer.png'),
             'chicken': load_image('entities/chicken.png'),
             'chicken/idle_down': Animation(
@@ -117,15 +118,6 @@ class Game:
             tile_pos = (int((mouse_pos[0]) // self.tilemap.tile_size),
                         int((mouse_pos[1]) // self.tilemap.tile_size))
 
-            current_tile_img = self.assets['fence'][self.selected_fence].copy()
-            current_tile_img.set_alpha(100)
-            if self.mode == 'fence':
-                self.game_display.blit(current_tile_img,
-                                       (tile_pos[0] * self.tilemap.tile_size,
-                                        tile_pos[1] * self.tilemap.tile_size))
-
-            print(mouse_pos)
-
             # outlines for button implementation
             # next button
             pygame.draw.rect(self.sidebar, (255, 0, 0),
@@ -142,7 +134,16 @@ class Game:
             pygame.draw.rect(self.sidebar, (255, 0, 0),
                              (337.5, 25, 200, 100), 2)
 
-
+            if pygame.mouse.get_pressed()[2]:
+                current_tile_img = self.assets['redfence'][self.selected_fence].copy()
+            else:
+                current_tile_img = self.assets['fence'][self.selected_fence].copy()
+            current_tile_img.set_alpha(100)
+            if self.mode == 'fence':
+                if self.selected_fence != 0:
+                    self.game_display.blit(current_tile_img,
+                                           (tile_pos[0] * self.tilemap.tile_size,
+                                            tile_pos[1] * self.tilemap.tile_size))
             if time_to_move:
                 pixels_moved += 1
                 for chicken in self.chickens:
@@ -204,6 +205,11 @@ class Game:
                 egg.timer.update()
                 egg.timer.render(self.game_display)
             self.tilemap.render_front_fences(self.game_display)
+            if self.mode == 'fence' and self.selected_fence == 0:
+                self.game_display.blit(current_tile_img,
+                                       (tile_pos[0] * self.tilemap.tile_size,
+                                        tile_pos[1] * self.tilemap.tile_size))
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -229,20 +235,6 @@ class Game:
                             mouse_timer = 30
                             self.v_displacement = 4
 
-                    event.y = 0
-                    
-                        if event.y > 0:
-                            self.v_displacement += 100
-                        elif event.y < 0:
-                            self.v_displacement -= 100
-                        else:
-                            self.v_displacement = 0
-
-
-                # if event.type == pygame.MOUSEBUTTONDOWN:
-                #     if self.mode == 'fence':
-                #         current_tile_img = pygame.PixelArray(current_tile_img)
-                #         current_tile_img.replace((0, 0, 0, 255), (255, 0, 0))
                 if event.type == pygame.MOUSEBUTTONUP:
                     if self.mode == 'fence':
                         if event.button == 1:
