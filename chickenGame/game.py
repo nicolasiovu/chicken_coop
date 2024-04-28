@@ -32,6 +32,7 @@ class Game:
             'hungerbar': load_images('entities/hungerbar'),
             'hunger': load_image('entities/hunger.png'),
             'feed': load_image('entities/feed.png'),
+            'redfeed': load_image('entities/redfeed.png'),
             'chicken': load_image('entities/chicken.png'),
             'chicken/idle_down': Animation(
                 load_images('entities/chicken/idle_down')),
@@ -72,7 +73,7 @@ class Game:
         self.v_displacement = 0
 
         self.mode = 'select'
-        self.money = 0
+        self.money = 100
 
         self.tilemap = Tilemap(self, tile_size=20)
 
@@ -137,23 +138,6 @@ class Game:
             pygame.draw.rect(self.sidebar, (255, 0, 0),
                              (337.5, 25, 200, 100), 2)
 
-            if self.mode == 'fence':
-                if pygame.mouse.get_pressed()[2]:
-                    current_tile_img = self.assets['redfence'][self.selected_fence].copy()
-                else:
-                    current_tile_img = self.assets['fence'][self.selected_fence].copy()
-            else:
-                current_tile_img = self.assets['feed']
-            current_tile_img.set_alpha(100)
-            if self.mode == 'fence':
-                if self.selected_fence != 0:
-                    self.game_display.blit(current_tile_img,
-                                           (tile_pos[0] * self.tilemap.tile_size,
-                                            tile_pos[1] * self.tilemap.tile_size))
-            elif self.mode == 'feed':
-                self.game_display.blit(current_tile_img,
-                                       (tile_pos[0] * self.tilemap.tile_size,
-                                        tile_pos[1] * self.tilemap.tile_size))
             if time_to_move:
                 pixels_moved += 1
                 for chicken in self.chickens:
@@ -187,6 +171,8 @@ class Game:
                     pos = (int(chicken.pos[0] // self.tilemap.tile_size),
                            int(chicken.pos[1] // self.tilemap.tile_size))
                     self.tilemap.chicken_here(pos, chicken)
+                    if any(self.tilemap.get_feeders_nearby(pos)):
+                        chicken.eat()
 
                 for rooster in self.roosters:
                     rooster.movement = [0, 0]
@@ -200,12 +186,36 @@ class Game:
                     pos = (int(rooster.pos[0] // self.tilemap.tile_size),
                            int(rooster.pos[1] // self.tilemap.tile_size))
                     self.tilemap.chicken_here(pos, rooster)
+                    if any(self.tilemap.get_feeders_nearby(pos)):
+                        rooster.eat()
                     for chicken in self.chickens:
                         if rooster.pos == chicken.pos:
                             if rooster.fertile and not chicken.fertile:
                                 rooster.fertilize()
                                 chicken.fertilized()
                 self.tilemap.check_overloaded_chickens(self.game_display)
+
+            if self.mode == 'fence':
+                if pygame.mouse.get_pressed()[2]:
+                    current_tile_img = self.assets['redfence'][self.selected_fence].copy()
+                else:
+                    current_tile_img = self.assets['fence'][self.selected_fence].copy()
+            else:
+                if pygame.mouse.get_pressed()[2]:
+                    current_tile_img = self.assets['redfeed'].copy()
+                else:
+                    current_tile_img = self.assets['feed'].copy()
+            current_tile_img.set_alpha(100)
+            if self.mode == 'fence':
+                if self.selected_fence != 0:
+                    self.game_display.blit(current_tile_img,
+                                           (tile_pos[0] * self.tilemap.tile_size,
+                                            tile_pos[1] * self.tilemap.tile_size))
+            elif self.mode == 'feed':
+                self.game_display.blit(current_tile_img,
+                                       (tile_pos[0] * self.tilemap.tile_size,
+                                        tile_pos[1] * self.tilemap.tile_size))
+            self.tilemap.render_feeders(self.game_display)
             for chicken in self.chickens:
                 chicken.render(self.game_display)
             for rooster in self.roosters:
@@ -261,6 +271,15 @@ class Game:
                             pos = (int(mouse_pos[0] // self.tilemap.tile_size),
                                    int(mouse_pos[1] // self.tilemap.tile_size))
                             self.tilemap.delete_fence(pos, self.selected_fence)
+                    elif self.mode == 'feed':
+                        if event.button == 1:
+                            pos = (int(mouse_pos[0] // self.tilemap.tile_size),
+                                   int(mouse_pos[1] // self.tilemap.tile_size))
+                            self.tilemap.place_feeder(pos)
+                        if event.button == 3:
+                            pos = (int(mouse_pos[0] // self.tilemap.tile_size),
+                                   int(mouse_pos[1] // self.tilemap.tile_size))
+                            self.tilemap.delete_feeder(pos)
                     elif self.mode == 'select':
                         if event.button == 1:
                             pos = (int(mouse_pos[0]),
@@ -292,23 +311,27 @@ class Game:
                                        int(rooster.pos[1] // self.tilemap.tile_size))
                                 self.tilemap.remove_chicken(pos, rooster)
                     if event.key == pygame.K_s:
-                        x = int(self.game_display.get_width() / 20)
-                        coordinates = (2 + 20 * random.randint(0, x - 1),
-                                       2 + 20 * random.randint(0, x - 1))
-                        pos = (int(coordinates[0] // self.tilemap.tile_size),
-                               int(coordinates[1] // self.tilemap.tile_size))
-                        new_chicken = Chicken(self, coordinates, (16, 16))
-                        self.chickens.append(new_chicken)
-                        self.tilemap.chicken_here(pos, new_chicken)
+                        if self.money - 8 >= 0:
+                            possible_places = self.tilemap.spawn_chicken(self.game_display)
+                            if possible_places:
+                                selected_place = possible_places[random.randint(0, len(possible_places) -1)]
+                                coordinates = (2 + 20 * selected_place['pos'][0],
+                                               2 + 20 * selected_place['pos'][1])
+                                new_chicken = Chicken(self, coordinates, (16, 16))
+                                self.chickens.append(new_chicken)
+                                self.tilemap.chicken_here(selected_place['pos'], new_chicken)
+                                self.money -= 8
                     if event.key == pygame.K_a:
-                        x = int(self.game_display.get_width() / 20)
-                        coordinates = (2 + 20 * random.randint(0, x - 1),
-                                       2 + 20 * random.randint(0, x - 1))
-                        pos = (int(coordinates[0] // self.tilemap.tile_size),
-                               int(coordinates[1] // self.tilemap.tile_size))
-                        new_rooster = Rooster(self, coordinates, (16, 16))
-                        self.roosters.append(new_rooster)
-                        self.tilemap.chicken_here(pos, new_rooster)
+                        if self.money - 12 >= 0:
+                            possible_places = self.tilemap.spawn_chicken(self.game_display)
+                            if possible_places:
+                                selected_place = possible_places[random.randint(0, len(possible_places) -1)]
+                                coordinates = (2 + 20 * selected_place['pos'][0],
+                                               2 + 20 * selected_place['pos'][1])
+                                new_rooster = Rooster(self, coordinates, (16, 16))
+                                self.roosters.append(new_rooster)
+                                self.tilemap.chicken_here(selected_place['pos'], new_rooster)
+                                self.money -= 12
                     if event.key == pygame.K_r:
                         self.stage += 1
                         if self.stage > len(self.stages) - 1:
@@ -342,8 +365,9 @@ class Game:
         fences = self.tilemap.get_fences_on_tile(pos)
         nearby_fences = self.tilemap.get_fences_nearby(pos)
         nearby_eggs = self.tilemap.get_eggs_nearby(pos)
+        nearby_feeders = self.tilemap.get_feeders_nearby(pos)
         for i in range(len(fences)):
-            if nearby_fences[i] == 1 or nearby_eggs[i] == 1:
+            if nearby_fences[i] == 1 or nearby_eggs[i] == 1 or nearby_feeders[i] == 1:
                 fences[i] = 1
         if all([fence == 1 for fence in fences]):
             return 0, 0

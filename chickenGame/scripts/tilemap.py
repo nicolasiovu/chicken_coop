@@ -1,5 +1,6 @@
 import json
 import pygame
+import random
 
 NEIGHBOR_TILES = [(0, 1), (-1, 0), (0, -1), (1, 0)]
 
@@ -66,6 +67,17 @@ class Tilemap:
                                      (tile['pos'][0] * self.tile_size - offset[0],
                                       tile['pos'][1] * self.tile_size - offset[1]))
 
+    def render_feeders(self, surface, offset=(0, 0)):
+        for x in range(offset[0] // self.tile_size, (offset[0] + surface.get_width()) // self.tile_size + 1):
+            for y in range(offset[1] // self.tile_size, (offset[1] + surface.get_height()) // self.tile_size + 1):
+                loc = str(x) + ';' + str(y)
+                if loc in self.tilemap:
+                    tile = self.tilemap[loc]
+                    if tile['has_feeder'] == 1:
+                        surface.blit(self.game.assets['feed'],
+                                     (tile['pos'][0] * self.tile_size - offset[0],
+                                      tile['pos'][1] * self.tile_size - offset[1]))
+
     def place_fence(self, pos, f_type):
         loc = str(pos[0]) + ';' + str(pos[1])
         if loc in self.tilemap:
@@ -81,6 +93,22 @@ class Tilemap:
             if tile['fence'][f_type] == 1:
                 tile['fence'][f_type] = 0
                 self.game.money += 2
+
+    def place_feeder(self, pos):
+        loc = str(pos[0]) + ';' + str(pos[1])
+        if loc in self.tilemap:
+            tile = self.tilemap[loc]
+            if tile['has_feeder'] == 0:
+                tile['has_feeder'] = 1
+                self.game.money -= 15
+
+    def delete_feeder(self, pos):
+        loc = str(pos[0]) + ';' + str(pos[1])
+        if loc in self.tilemap:
+            tile = self.tilemap[loc]
+            if tile['has_feeder'] == 1:
+                tile['has_feeder'] = 0
+                self.game.money += 10
 
     def get_fences_on_tile(self, pos):
         loc = str(pos[0]) + ';' + str(pos[1])
@@ -109,6 +137,29 @@ class Tilemap:
                 if self.tilemap[loc]['has_egg'] == 1:
                     eggs[i] = 1
         return eggs
+
+    def get_feeders_nearby(self, pos):
+        feeders = [0, 0, 0, 0]
+        for i in range(len(NEIGHBOR_TILES)):
+            loc = (str(pos[0] + NEIGHBOR_TILES[i][0]) + ';' +
+                   str(pos[1] + NEIGHBOR_TILES[i][1]))
+            if loc in self.tilemap:
+                if self.tilemap[loc]['has_feeder'] == 1:
+                    feeders[i] = 1
+        return feeders
+
+    def spawn_chicken(self, surface, offset=(0, 0)) -> list:
+        possible_tiles = []
+        for x in range(0, surface.get_width(), 20):
+            x //= self.tile_size
+            for y in range(0, surface.get_height(), 20):
+                y //= self.tile_size
+                loc = str(x) + ';' + str(y)
+                if loc in self.tilemap:
+                    tile = self.tilemap[loc]
+                    if tile['has_egg'] == 0 and tile['has_feeder'] == 0 and not tile['chickens']:
+                        possible_tiles.append(tile)
+        return possible_tiles
 
     def chicken_here(self, pos, chicken):
         loc = str(pos[0]) + ';' + str(pos[1])

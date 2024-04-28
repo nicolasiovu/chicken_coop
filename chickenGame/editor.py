@@ -75,6 +75,7 @@ class Editor:
                     'pos': tile_pos,
                     'fence': [0, 0, 0, 0],
                     'has_egg': 0,
+                    'has_feeder': 0,
                     'chickens': []
                 }
             if self.right_clicking:

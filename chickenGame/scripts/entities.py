@@ -65,6 +65,10 @@ class HungerBar:
         self.img = self.game.assets['hungerbar'][self.progress]
         return True
 
+    def reset(self):
+        self.progress = 0
+        self.img = self.game.assets['hungerbar'][self.progress]
+
     def render(self, surface):
         surface.blit(self.img, self.pos)
 
@@ -142,6 +146,9 @@ class Chicken(PhysicsEntity):
         self.timer.next_img()
         self.fertile = False
 
+    def eat(self):
+        self.hunger_bar.reset()
+
 
 class Rooster(PhysicsEntity):
     def __init__(self, game, pos, size):
@@ -185,6 +192,9 @@ class Rooster(PhysicsEntity):
         self.fertile = False
         self.timer.next_img()
 
+    def eat(self):
+        self.hunger_bar.reset()
+
 
 class Egg:
     def __init__(self, game, e_type, pos, size, img):
@@ -215,4 +225,3 @@ class Egg:
         loc = str(loc[0]) + ';' + str(loc[1])
         self.game.tilemap.tilemap[loc]['has_egg'] = 0
         self.game.money += 3
-
