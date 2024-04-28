@@ -21,6 +21,7 @@ class Game:
 
         self.stages = [60, 80, 100, 140, 180, 240, 300, 400, 500, 600, 720]
         self.stage = 0
+        self.expand_prices = [100, 300, 1000, 1500, 2000, 4000, 6000, 10000, 50000, 1000000]
 
         self.resolution = 60
 
@@ -73,7 +74,7 @@ class Game:
         self.v_displacement = 0
 
         self.mode = 'select'
-        self.money = 100
+        self.money = 100000000
 
         self.tilemap = Tilemap(self, tile_size=20)
 
@@ -333,13 +334,13 @@ class Game:
                                 self.tilemap.chicken_here(selected_place['pos'], new_rooster)
                                 self.money -= 12
                     if event.key == pygame.K_r:
-                        self.stage += 1
-                        if self.stage > len(self.stages) - 1:
-                            self.stage = 0
-                        self.resolution = self.stages[self.stage]
-                        size_factor = 720 / self.resolution
-                        self.game_display = pygame.Surface(
-                            (self.resolution, self.resolution))
+                        if self.stage < 10 and self.money >= self.expand_prices[self.stage]:
+                            self.money -= self.expand_prices[self.stage]
+                            self.stage += 1
+                            self.resolution = self.stages[self.stage]
+                            size_factor = 720 / self.resolution
+                            self.game_display = pygame.Surface(
+                                (self.resolution, self.resolution))
 
                     # CHANGE MODE TO FENCE or SELECT or FEED: temp actuation,
                     # will be a button

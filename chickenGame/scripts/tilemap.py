@@ -92,13 +92,13 @@ class Tilemap:
             tile = self.tilemap[loc]
             if tile['fence'][f_type] == 1:
                 tile['fence'][f_type] = 0
-                self.game.money += 2
+                self.game.money += 3
 
     def place_feeder(self, pos):
         loc = str(pos[0]) + ';' + str(pos[1])
         if loc in self.tilemap:
             tile = self.tilemap[loc]
-            if tile['has_feeder'] == 0:
+            if tile['has_feeder'] == 0 and not tile['chickens']:
                 tile['has_feeder'] = 1
                 self.game.money -= 15
 

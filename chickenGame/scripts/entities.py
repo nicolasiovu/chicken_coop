@@ -224,4 +224,4 @@ class Egg:
         self.game.eggs.remove(self)
         loc = str(loc[0]) + ';' + str(loc[1])
         self.game.tilemap.tilemap[loc]['has_egg'] = 0
-        self.game.money += 3
+        self.game.money += 6
