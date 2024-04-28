@@ -195,6 +195,7 @@ class Game:
                                 chicken.fertilized()
                 self.tilemap.check_overloaded_chickens(self.game_display)
 
+            self.tilemap.render_feeders(self.game_display)
             if self.mode == 'fence':
                 if pygame.mouse.get_pressed()[2]:
                     current_tile_img = self.assets['redfence'][self.selected_fence].copy()
@@ -215,7 +216,6 @@ class Game:
                 self.game_display.blit(current_tile_img,
                                        (tile_pos[0] * self.tilemap.tile_size,
                                         tile_pos[1] * self.tilemap.tile_size))
-            self.tilemap.render_feeders(self.game_display)
             for chicken in self.chickens:
                 chicken.render(self.game_display)
             for rooster in self.roosters:
