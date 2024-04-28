@@ -67,6 +67,7 @@ class Game:
         self.buttons = []
         self.v_displacement = 0
 
+        self.mode = 'select'
         self.money = 0
 
         self.tilemap = Tilemap(self, tile_size=20)
@@ -96,17 +97,17 @@ class Game:
             self.buttons.append(b)
             b.render(self.sidebar)
 
-            current_tile_img = self.assets['fence'][self.selected_fence].copy()
-            current_tile_img.set_alpha(100)
-
             mouse_pos = pygame.mouse.get_pos()
             mouse_pos = (mouse_pos[0] / size_factor, mouse_pos[1] / size_factor)
             tile_pos = (int((mouse_pos[0]) // self.tilemap.tile_size),
                         int((mouse_pos[1]) // self.tilemap.tile_size))
 
-            self.game_display.blit(current_tile_img,
-                                   (tile_pos[0] * self.tilemap.tile_size,
-                                    tile_pos[1] * self.tilemap.tile_size))
+            current_tile_img = self.assets['fence'][self.selected_fence].copy()
+            current_tile_img.set_alpha(100)
+            if self.mode == 'fence':
+                self.game_display.blit(current_tile_img,
+                                       (tile_pos[0] * self.tilemap.tile_size,
+                                        tile_pos[1] * self.tilemap.tile_size))
 
             if time_to_move:
                 pixels_moved += 1
@@ -175,9 +176,8 @@ class Game:
                     sys.exit()
 
                 if event.type == pygame.MOUSEWHEEL:
-                    if mouse_pos[0] <= self.stages[self.stage]:
+                    if mouse_pos[0] <= self.stages[self.stage] and self.mode == 'fence':
                         if event.y > 0:
-                            print(event.y)
                             self.selected_fence -= 1
                             if self.selected_fence == -1:
                                 self.selected_fence = 3
@@ -188,29 +188,35 @@ class Game:
 
                     elif mouse_pos[0] > self.stages[self.stage]:
                         if event.y > 0:
-                            print("down")
-
                             self.v_displacement += 100
                         elif event.y < 0:
-                            print("up")
-
                             self.v_displacement -= 100
                         else:
                             self.v_displacement = 0
 
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        pos = (int(mouse_pos[0] // self.tilemap.tile_size),
-                               int(mouse_pos[1] // self.tilemap.tile_size))
-                        self.tilemap.place_fence(pos, self.selected_fence)
-                    if event.button == 3:
-                        pos = (int(mouse_pos[0]),
-                               int(mouse_pos[1]))
-                        for egg in self.eggs:
-                            if pos[0] in range(egg.pos[0], egg.pos[0] + 16) and \
-                                    pos[1] in range(egg.pos[1], egg.pos[1] + 16):
-                                self.eggs.remove(egg)
-                                self.money += 1
+                # if event.type == pygame.MOUSEBUTTONDOWN:
+                #     if self.mode == 'fence':
+                #         current_tile_img = pygame.PixelArray(current_tile_img)
+                #         current_tile_img.replace((0, 0, 0, 255), (255, 0, 0))
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if self.mode == 'fence':
+                        if event.button == 1:
+                            pos = (int(mouse_pos[0] // self.tilemap.tile_size),
+                                   int(mouse_pos[1] // self.tilemap.tile_size))
+                            self.tilemap.place_fence(pos, self.selected_fence)
+                        if event.button == 3:
+                            pos = (int(mouse_pos[0] // self.tilemap.tile_size),
+                                   int(mouse_pos[1] // self.tilemap.tile_size))
+                            self.tilemap.delete_fence(pos, self.selected_fence)
+                    elif self.mode == 'select':
+                        if event.button == 1:
+                            pos = (int(mouse_pos[0]),
+                                   int(mouse_pos[1]))
+                            for egg in self.eggs:
+                                if pos[0] in range(egg.pos[0], egg.pos[0] + 16) and \
+                                        pos[1] in range(egg.pos[1], egg.pos[1] + 16):
+                                    self.eggs.remove(egg)
+                                    self.money += 3
                 if event.type == pygame.KEYUP and pixels_moved == 0:
                     if event.key == pygame.K_n:
                         time_to_move = True
@@ -259,6 +265,13 @@ class Game:
                         size_factor = 720 / self.resolution
                         self.game_display = pygame.Surface(
                             (self.resolution, self.resolution))
+
+                    # CHANGE MODE TO FENCE or SELECT: temp actuation,
+                    # will be a button
+                    if event.key == pygame.K_k:
+                        self.mode = 'fence'
+                    elif event.key == pygame.K_l:
+                        self.mode = 'select'
 
             text_surface = self.my_font.render(str(self.money), False, (0, 0, 0))
             self.sidebar.blit(text_surface, (100, 50))

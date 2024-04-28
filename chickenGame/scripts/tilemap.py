@@ -72,6 +72,12 @@ class Tilemap:
             tile = self.tilemap[loc]
             tile['fence'][f_type] = 1
 
+    def delete_fence(self, pos, f_type):
+        loc = str(pos[0]) + ';' + str(pos[1])
+        if loc in self.tilemap:
+            tile = self.tilemap[loc]
+            tile['fence'][f_type] = 0
+
     def get_fences_on_tile(self, pos):
         loc = str(pos[0]) + ';' + str(pos[1])
         if loc in self.tilemap:
@@ -119,11 +125,15 @@ class Tilemap:
                 if loc in self.tilemap:
                     tile = self.tilemap[loc]
                     if len(tile['chickens']) >= 3:
+                        print(len(tile['chickens']), len(self.game.chickens) + len(self.game.roosters))
                         for chicken in tile['chickens']:
                             if chicken.type == 'chicken':
-                                self.game.chickens.remove(chicken)
+                                if chicken in self.game.chickens:
+                                    self.game.chickens.remove(chicken)
                             else:
-                                self.game.roosters.remove(chicken)
+                                if chicken in self.game.roosters:
+                                    self.game.roosters.remove(chicken)
                         tile['chickens'] = []
+                        print(len(tile['chickens']), len(self.game.chickens) + len(self.game.roosters))
 
 
