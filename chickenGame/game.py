@@ -29,6 +29,9 @@ class Game:
             'fence': load_images('tiles/placeable'),
             'redfence': load_images('tiles/redplaceable'),
             'timer': load_image('entities/timer.png'),
+            'hungerbar': load_images('entities/hungerbar'),
+            'hunger': load_image('entities/hunger.png'),
+            'feed': load_image('entities/feed.png'),
             'chicken': load_image('entities/chicken.png'),
             'chicken/idle_down': Animation(
                 load_images('entities/chicken/idle_down')),
@@ -134,35 +137,38 @@ class Game:
             pygame.draw.rect(self.sidebar, (255, 0, 0),
                              (337.5, 25, 200, 100), 2)
 
-            if pygame.mouse.get_pressed()[2]:
-                current_tile_img = self.assets['redfence'][self.selected_fence].copy()
+            if self.mode == 'fence':
+                if pygame.mouse.get_pressed()[2]:
+                    current_tile_img = self.assets['redfence'][self.selected_fence].copy()
+                else:
+                    current_tile_img = self.assets['fence'][self.selected_fence].copy()
             else:
-                current_tile_img = self.assets['fence'][self.selected_fence].copy()
+                current_tile_img = self.assets['feed']
             current_tile_img.set_alpha(100)
             if self.mode == 'fence':
                 if self.selected_fence != 0:
                     self.game_display.blit(current_tile_img,
                                            (tile_pos[0] * self.tilemap.tile_size,
                                             tile_pos[1] * self.tilemap.tile_size))
+            elif self.mode == 'feed':
+                self.game_display.blit(current_tile_img,
+                                       (tile_pos[0] * self.tilemap.tile_size,
+                                        tile_pos[1] * self.tilemap.tile_size))
             if time_to_move:
                 pixels_moved += 1
                 for chicken in self.chickens:
                     chicken.update(chicken.movement)
-                    chicken.timer.update(chicken.movement)
                 for rooster in self.roosters:
                     rooster.update(rooster.movement)
-                    rooster.timer.update(rooster.movement)
             else:
                 for chicken in self.chickens:
                     chicken.update()
-                    chicken.timer.update()
                     if (0 > chicken.pos[0] or 0 > chicken.pos[1]) or \
                             (chicken.pos[0] > self.stages[self.stage] or
                              chicken.pos[1] > self.stages[self.stage]):
                         self.chickens.remove(chicken)
                 for rooster in self.roosters:
                     rooster.update()
-                    rooster.timer.update()
                     if (0 > rooster.pos[0] or 0 > rooster.pos[1]) or \
                             (rooster.pos[0] > self.stages[self.stage] or
                              rooster.pos[1] > self.stages[self.stage]):
@@ -172,6 +178,9 @@ class Game:
                 time_to_move = False
                 for chicken in self.chickens:
                     chicken.movement = [0, 0]
+                    if not chicken.hunger_bar.next_img():
+                        self.chickens.remove(chicken)
+                        continue
                     if chicken.fertile:
                         if chicken.timer.progress != 3:
                             chicken.timer.next_img()
@@ -181,6 +190,9 @@ class Game:
 
                 for rooster in self.roosters:
                     rooster.movement = [0, 0]
+                    if not rooster.hunger_bar.next_img():
+                        self.roosters.remove(rooster)
+                        continue
                     if not rooster.fertile:
                         rooster.timer.next_img()
                     if rooster.timer.progress == 3:
@@ -196,15 +208,19 @@ class Game:
                 self.tilemap.check_overloaded_chickens(self.game_display)
             for chicken in self.chickens:
                 chicken.render(self.game_display)
-                chicken.timer.render(self.game_display)
             for rooster in self.roosters:
                 rooster.render(self.game_display)
-                rooster.timer.render(self.game_display)
             for egg in self.eggs:
                 egg.render(self.game_display)
                 egg.timer.update()
                 egg.timer.render(self.game_display)
             self.tilemap.render_front_fences(self.game_display)
+            for chicken in self.chickens:
+                chicken.timer.render(self.game_display)
+                chicken.hunger_bar.render(self.game_display)
+            for rooster in self.roosters:
+                rooster.timer.render(self.game_display)
+                rooster.hunger_bar.render(self.game_display)
             if self.mode == 'fence' and self.selected_fence == 0:
                 self.game_display.blit(current_tile_img,
                                        (tile_pos[0] * self.tilemap.tile_size,
@@ -252,8 +268,7 @@ class Game:
                             for egg in self.eggs:
                                 if pos[0] in range(egg.pos[0], egg.pos[0] + 16) and \
                                         pos[1] in range(egg.pos[1], egg.pos[1] + 16):
-                                    self.eggs.remove(egg)
-                                    self.money += 3
+                                    egg.sell()
                 if event.type == pygame.KEYUP and pixels_moved == 0:
                     if event.key == pygame.K_n:
                         time_to_move = True
@@ -303,12 +318,14 @@ class Game:
                         self.game_display = pygame.Surface(
                             (self.resolution, self.resolution))
 
-                    # CHANGE MODE TO FENCE or SELECT: temp actuation,
+                    # CHANGE MODE TO FENCE or SELECT or FEED: temp actuation,
                     # will be a button
                     if event.key == pygame.K_k:
                         self.mode = 'fence'
                     elif event.key == pygame.K_l:
                         self.mode = 'select'
+                    elif event.key == pygame.K_f:
+                        self.mode = 'feed'
 
             text_surface = self.my_font.render(str(self.money), False, (0, 0, 0))
             self.sidebar.blit(text_surface, (100, 50))

@@ -46,6 +46,29 @@ class PhysicsEntity:
                      self.pos)
 
 
+class HungerBar:
+    def __init__(self, game, pos, img, size):
+        self.game = game
+        self.img = img
+        self.size = size
+        self.pos = list(pos)
+        self.progress = 0
+
+    def update(self, movement=(0, 0)):
+        self.pos[0] += movement[0]
+        self.pos[1] += movement[1]
+
+    def next_img(self) -> bool:
+        self.progress += 1
+        if self.progress == 18:
+            return False
+        self.img = self.game.assets['hungerbar'][self.progress]
+        return True
+
+    def render(self, surface):
+        surface.blit(self.img, self.pos)
+
+
 class Timer:
     def __init__(self, game, pos, img, size):
         self.game = game
@@ -74,6 +97,8 @@ class Chicken(PhysicsEntity):
         self.timer = Timer(game, (pos[0] - 2, pos[1] - 2),
                            game.assets['timer'], (20, 20))
         self.fertile = fertile
+        self.hunger_bar = HungerBar(game, (pos[0] - 2, pos[1] - 2),
+                                    game.assets['hunger'], (20, 20))
 
     def update(self, movement=(0, 0)):
         if movement[0] != 0:
@@ -101,6 +126,8 @@ class Chicken(PhysicsEntity):
             elif x == 4:
                 self.set_action('idle_down')
         super().update(movement=movement)
+        self.timer.update(self.movement)
+        self.hunger_bar.update(self.movement)
 
     def fertilized(self):
         self.fertile = True
@@ -122,6 +149,8 @@ class Rooster(PhysicsEntity):
         self.timer = Timer(game, (pos[0] - 2, pos[1] - 2),
                            game.assets['timer'], (20, 20))
         self.fertile = False
+        self.hunger_bar = HungerBar(game, (pos[0] - 2, pos[1] - 2),
+                                    game.assets['hunger'], (20, 20))
 
     def update(self, movement=(0, 0)):
         if movement[0] != 0:
@@ -149,6 +178,8 @@ class Rooster(PhysicsEntity):
             elif x == 4:
                 self.set_action('idle_down')
         super().update(movement=movement)
+        self.timer.update(self.movement)
+        self.hunger_bar.update(self.movement)
 
     def fertilize(self):
         self.fertile = False
@@ -176,4 +207,12 @@ class Egg:
         self.game.chickens.append(new_chicken)
         loc = str(loc[0]) + ';' + str(loc[1])
         self.game.tilemap.tilemap[loc]['has_egg'] = 0
+
+    def sell(self):
+        loc = (int((self.pos[0]) // self.game.tilemap.tile_size),
+               int((self.pos[1]) // self.game.tilemap.tile_size))
+        self.game.eggs.remove(self)
+        loc = str(loc[0]) + ';' + str(loc[1])
+        self.game.tilemap.tilemap[loc]['has_egg'] = 0
+        self.game.money += 3
 

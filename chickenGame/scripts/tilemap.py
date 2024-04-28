@@ -114,7 +114,8 @@ class Tilemap:
         loc = str(pos[0]) + ';' + str(pos[1])
         if loc in self.tilemap:
             tile = self.tilemap[loc]
-            tile['chickens'].append(chicken)
+            if chicken not in tile['chickens']:
+                tile['chickens'].append(chicken)
 
     def remove_chicken(self, pos, chicken):
         loc = str(pos[0]) + ';' + str(pos[1])
@@ -129,7 +130,6 @@ class Tilemap:
                 if loc in self.tilemap:
                     tile = self.tilemap[loc]
                     if len(tile['chickens']) >= 3:
-                        print(len(tile['chickens']), len(self.game.chickens) + len(self.game.roosters))
                         for chicken in tile['chickens']:
                             if chicken.type == 'chicken':
                                 if chicken in self.game.chickens:
@@ -138,6 +138,5 @@ class Tilemap:
                                 if chicken in self.game.roosters:
                                     self.game.roosters.remove(chicken)
                         tile['chickens'] = []
-                        print(len(tile['chickens']), len(self.game.chickens) + len(self.game.roosters))
 
 
