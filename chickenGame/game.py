@@ -13,7 +13,7 @@ class Game:
         pygame.init()
         pygame.display.set_caption('chicken game')
         pygame.font.init()
-        self.my_font = pygame.font.SysFont('Comic Sans MS', 100)
+        self.my_font = pygame.font.SysFont('Comic Sans MS', 30)
         self.screen = pygame.display.set_mode((1280, 720))
         self.game_display = pygame.Surface((60, 60), pygame.SRCALPHA)
         self.sidebar = pygame.Surface((560, 720), pygame.SRCALPHA)
@@ -34,7 +34,14 @@ class Game:
             'hunger': load_image('entities/hunger.png'),
             'feed': load_image('entities/feed.png'),
             'redfeed': load_image('entities/redfeed.png'),
+            'buy': load_image('buttons/buy.png'),
+            'moneyshow': load_image('buttons/moneyshow.png'),
+            'nextbutton': load_image('buttons/nextbutton.png'),
+            'title': load_image('buttons/title.png'),
             'chicken': load_image('entities/chicken.png'),
+            'toggle0': load_image('buttons/toggle_mode/toggle0.png'),
+            'toggle1': load_image('buttons/toggle_mode/toggle1.png'),
+            'toggle2': load_image('buttons/toggle_mode/toggle2.png'),
             'chicken/idle_down': Animation(
                 load_images('entities/chicken/idle_down')),
             'chicken/idle_right': Animation(
@@ -88,11 +95,25 @@ class Game:
         time_to_move = False
         pixels_moved = 0
         size_factor = 720 / self.resolution
-        b = Button(self, "toggle", True, 150, 150, 100, 100)
-        c = Button(self, "toggle", False, 160, 600, 100, 100)
-        self.buttons.append(b)
-        self.buttons.append(c)
+        toggle_temp = ['toggle0', 'toggle1', 'toggle2']
+        next_turn = Button(self, "press", False, 25, 600, 200, 100, 'nextbutton')
+        money_display = Button(self, "press", False, 338, 25, 200, 100, 'moneyshow')
+        buy_chicken = Button(self, "press", False, 250, 600, 288 / 2, 100, 'buy')
+        buy_rooster = Button(self, "press", False, 250 + 144, 600, 288 / 2, 100, None)
+        title_display = Button(self, "press", False, 25, 25, 288, 100, 'title')
+        toggle_mode = Button(self, "toggle", True, 25, 150, 288, 100, toggle_temp)
+        self.buttons.append(next_turn)
+        self.buttons.append(money_display)
+        self.buttons.append(buy_chicken)
+        self.buttons.append(buy_rooster)
+        self.buttons.append(title_display)
+        self.buttons.append(toggle_mode)
         mouse_timer = 0
+
+        select_modes = ['select', 'fence', 'feed']
+        curr_mode = 0
+        self.mode = select_modes[0]
+
         while True:
 
             self.screen.fill((0, 0, 0, 0))
@@ -115,9 +136,17 @@ class Game:
             for button in self.buttons:
                 if button.moveable:
                     button.render(self.sidebar, self.v_displacement)
+
+            pygame.draw.rect(self.sidebar, (0, 0, 1),
+                             (0, 0, 560, 140), 0)
+            pygame.draw.rect(self.sidebar, (0, 0, 1),
+                             (0, 580, 560, 140), 0)
+            for button in self.buttons:
+                if button.moveable:
+                    pass
                 else:
                     button.render(self.sidebar, 0)
-
+            actual_mouse_pos = pygame.mouse.get_pos()
             mouse_pos = pygame.mouse.get_pos()
             mouse_pos = (mouse_pos[0] / size_factor, mouse_pos[1] / size_factor)
             tile_pos = (int((mouse_pos[0]) // self.tilemap.tile_size),
@@ -138,6 +167,8 @@ class Game:
             # money
             pygame.draw.rect(self.sidebar, (255, 0, 0),
                              (337.5, 25, 200, 100), 2)
+
+
 
             if time_to_move:
                 pixels_moved += 1
@@ -289,8 +320,9 @@ class Game:
                                 if pos[0] in range(egg.pos[0], egg.pos[0] + 16) and \
                                         pos[1] in range(egg.pos[1], egg.pos[1] + 16):
                                     egg.sell()
-                if event.type == pygame.KEYUP and pixels_moved == 0:
-                    if event.key == pygame.K_n:
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if next_turn.is_within(actual_mouse_pos) and pixels_moved == 0:
                         time_to_move = True
                         for egg in self.eggs:
                             if egg.timer.progress == 3:
@@ -311,28 +343,47 @@ class Game:
                                 pos = (int(rooster.pos[0] // self.tilemap.tile_size),
                                        int(rooster.pos[1] // self.tilemap.tile_size))
                                 self.tilemap.remove_chicken(pos, rooster)
-                    if event.key == pygame.K_s:
+                    elif buy_chicken.is_within(actual_mouse_pos):
                         if self.money - 8 >= 0:
                             possible_places = self.tilemap.spawn_chicken(self.game_display)
                             if possible_places:
-                                selected_place = possible_places[random.randint(0, len(possible_places) -1)]
+                                selected_place = possible_places[random.randint(0, len(possible_places) - 1)]
                                 coordinates = (2 + 20 * selected_place['pos'][0],
                                                2 + 20 * selected_place['pos'][1])
                                 new_chicken = Chicken(self, coordinates, (16, 16))
                                 self.chickens.append(new_chicken)
                                 self.tilemap.chicken_here(selected_place['pos'], new_chicken)
                                 self.money -= 8
-                    if event.key == pygame.K_a:
+                    elif buy_rooster.is_within(actual_mouse_pos):
                         if self.money - 12 >= 0:
                             possible_places = self.tilemap.spawn_chicken(self.game_display)
                             if possible_places:
-                                selected_place = possible_places[random.randint(0, len(possible_places) -1)]
+                                selected_place = possible_places[random.randint(0, len(possible_places) - 1)]
                                 coordinates = (2 + 20 * selected_place['pos'][0],
                                                2 + 20 * selected_place['pos'][1])
                                 new_rooster = Rooster(self, coordinates, (16, 16))
                                 self.roosters.append(new_rooster)
                                 self.tilemap.chicken_here(selected_place['pos'], new_rooster)
                                 self.money -= 12
+                    elif toggle_mode.is_within(actual_mouse_pos):
+                        if select_modes.index(self.mode) == len(select_modes) - 1:
+                            curr_mode = 0
+                        else:
+                            curr_mode += 1
+                        toggle_mode.next_img()
+                        self.mode = select_modes[curr_mode]
+                        print(self.mode)
+
+                #print(actual_mouse_pos)
+
+                #print(next_turn.is_within(actual_mouse_pos))
+                if event.type == pygame.KEYUP and pixels_moved == 0:
+                    if event.key == pygame.K_n:
+                        pass
+                    if event.key == pygame.K_s:
+                        pass
+                    if event.key == pygame.K_a:
+                        pass
                     if event.key == pygame.K_r:
                         if self.stage < 10 and self.money >= self.expand_prices[self.stage]:
                             self.money -= self.expand_prices[self.stage]
@@ -352,7 +403,7 @@ class Game:
                         self.mode = 'feed'
 
             text_surface = self.my_font.render(str(self.money), False, (0, 0, 0))
-            self.sidebar.blit(text_surface, (100, 50))
+            self.sidebar.blit(text_surface, (345, 50))
             self.screen.blit(
                 pygame.transform.scale(self.game_display, (720, 720)), (0, 0))
             self.screen.blit(self.sidebar, (720, 0))
