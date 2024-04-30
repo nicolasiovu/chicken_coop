@@ -293,7 +293,7 @@ class Game:
                             mouse_timer = 30
                             self.v_displacement = 4
 
-                if event.type == pygame.MOUSEBUTTONUP:
+                if event.type == pygame.MOUSEBUTTONUP and pygame.mouse.get_pos()[0] < 720:
                     if self.mode == 'fence':
                         if event.button == 1:
                             pos = (int(mouse_pos[0] // self.tilemap.tile_size),
@@ -321,7 +321,7 @@ class Game:
                                         pos[1] in range(egg.pos[1], egg.pos[1] + 16):
                                     egg.sell()
 
-                if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
                     if next_turn.is_within(actual_mouse_pos) and pixels_moved == 0:
                         time_to_move = True
                         for egg in self.eggs:

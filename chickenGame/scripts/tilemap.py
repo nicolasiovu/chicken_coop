@@ -98,7 +98,7 @@ class Tilemap:
         loc = str(pos[0]) + ';' + str(pos[1])
         if loc in self.tilemap:
             tile = self.tilemap[loc]
-            if tile['has_feeder'] == 0 and not tile['chickens']:
+            if tile['has_feeder'] == 0 and not tile['chickens'] and tile['has_egg'] == 0:
                 tile['has_feeder'] = 1
                 self.game.money -= 15
 
@@ -172,7 +172,8 @@ class Tilemap:
         loc = str(pos[0]) + ';' + str(pos[1])
         if loc in self.tilemap:
             tile = self.tilemap[loc]
-            tile['chickens'].remove(chicken)
+            if chicken in tile['chickens']:
+                tile['chickens'].remove(chicken)
 
     def check_overloaded_chickens(self, surface, offset=(0, 0)):
         for x in range(offset[0] // self.tile_size, (offset[0] + surface.get_width()) // self.tile_size + 1):
