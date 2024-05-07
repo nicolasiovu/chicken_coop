@@ -34,14 +34,19 @@ class Game:
             'hunger': load_image('entities/hunger.png'),
             'feed': load_image('entities/feed.png'),
             'redfeed': load_image('entities/redfeed.png'),
+            'sidebar_back': load_image('sidebar.png'),
             'buy': load_image('buttons/buy.png'),
+            'buy2': load_image('buttons/buy2.png'),
             'moneyshow': load_image('buttons/moneyshow.png'),
+            'moneyshow2': load_image('buttons/moneyshow2.png'),
             'nextbutton': load_image('buttons/nextbutton.png'),
+            'nextbutton2': load_image('buttons/nextbutton2.png'),
+            'expand': load_image('buttons/expand.png'),
             'title': load_image('buttons/title.png'),
             'chicken': load_image('entities/chicken.png'),
-            'toggle0': load_image('buttons/toggle_mode/toggle0.png'),
-            'toggle1': load_image('buttons/toggle_mode/toggle1.png'),
-            'toggle2': load_image('buttons/toggle_mode/toggle2.png'),
+            'toggle0': load_image('buttons/toggle_mode2/toggle0.png'),
+            'toggle1': load_image('buttons/toggle_mode2/toggle1.png'),
+            'toggle2': load_image('buttons/toggle_mode2/toggle2.png'),
             'chicken/idle_down': Animation(
                 load_images('entities/chicken/idle_down')),
             'chicken/idle_right': Animation(
@@ -81,7 +86,7 @@ class Game:
         self.v_displacement = 0
 
         self.mode = 'select'
-        self.money = 100000000
+        self.money = 100
 
         self.tilemap = Tilemap(self, tile_size=20)
 
@@ -96,39 +101,45 @@ class Game:
         pixels_moved = 0
         size_factor = 720 / self.resolution
         toggle_temp = ['toggle0', 'toggle1', 'toggle2']
-        next_turn = Button(self, "press", False, 25, 600, 200, 100, 'nextbutton')
-        money_display = Button(self, "press", False, 338, 25, 200, 100, 'moneyshow')
-        buy_chicken = Button(self, "press", False, 250, 600, 288 / 2, 100, 'buy')
+        next_turn = Button(self, "press", False, 25, 600, 200, 100, 'nextbutton2')
+        expand_plot = Button(self, 'press', True, 325, 155, 200, 100, 'expand')
+        money_display = Button(self, "press", False, 338, 25, 200, 100, 'moneyshow2')
+        buy_chicken = Button(self, "press", False, 250, 600, 288 / 2, 100, 'buy2')
         buy_rooster = Button(self, "press", False, 250 + 144, 600, 288 / 2, 100, None)
-        title_display = Button(self, "press", False, 25, 25, 288, 100, 'title')
-        toggle_mode = Button(self, "toggle", True, 25, 150, 288, 100, toggle_temp)
+        # title_display = Button(self, "press", False, 25, 25, 288, 100, 'title')
+        toggle_mode = Button(self, "toggle", True, 25, 155, 288, 100, toggle_temp)
         self.buttons.append(next_turn)
+        self.buttons.append(expand_plot)
         self.buttons.append(money_display)
         self.buttons.append(buy_chicken)
         self.buttons.append(buy_rooster)
-        self.buttons.append(title_display)
+        # self.buttons.append(title_display)
         self.buttons.append(toggle_mode)
         mouse_timer = 0
 
         select_modes = ['select', 'fence', 'feed']
         curr_mode = 0
         self.mode = select_modes[0]
+        first_chicken = Chicken(self, (22, 22), (16, 16))
+        self.chickens.append(first_chicken)
+        self.tilemap.chicken_here([1, 1], first_chicken)
+        first_rooster = Rooster(self, (2, 2), (16, 16))
+        self.roosters.append(first_rooster)
+        self.tilemap.chicken_here([0, 0], first_rooster)
 
         while True:
 
             self.screen.fill((0, 0, 0, 0))
             self.game_display.fill((0, 0, 0, 0))
-            self.sidebar.fill((90, 0, 0))
+            self.sidebar.fill((0, 0, 0))
+            self.sidebar.blit(self.assets['sidebar_back'], (0, 0))
 
             self.tilemap.render(self.game_display)
             self.tilemap.render_fences(self.game_display)
-
             # BUTTONS
 
             if mouse_timer > 0:
-
                 mouse_timer -= 1
-                print(mouse_timer)
             else:
                 self.v_displacement = 0
 
@@ -137,10 +148,10 @@ class Game:
                 if button.moveable:
                     button.render(self.sidebar, self.v_displacement)
 
-            pygame.draw.rect(self.sidebar, (0, 0, 1),
-                             (0, 0, 560, 140), 0)
-            pygame.draw.rect(self.sidebar, (0, 0, 1),
-                             (0, 580, 560, 140), 0)
+            # pygame.draw.rect(self.sidebar, (0, 0, 1),
+            #                  (0, 0, 560, 140), 0)
+            # pygame.draw.rect(self.sidebar, (0, 0, 1),
+            #                  (0, 580, 560, 140), 0)
             for button in self.buttons:
                 if button.moveable:
                     pass
@@ -154,21 +165,19 @@ class Game:
 
             # outlines for button implementation
             # next button
-            pygame.draw.rect(self.sidebar, (255, 0, 0),
-                             (25, 600, 200, 100), 2)
+            # pygame.draw.rect(self.sidebar, (0, 0, 0),
+            #                  (25, 600, 200, 100), 2)
             # buy rooster/chicken button (split in half)
-            pygame.draw.rect(self.sidebar, (255, 0, 0),
-                             (250, 600, 287.5, 100), 2)
+            # pygame.draw.rect(self.sidebar, (0, 0, 0),
+            #                  (250, 600, 287.5, 100), 2)
 
             # stats box (like how many roosters you have and chickens)
-            pygame.draw.rect(self.sidebar, (255, 0, 0),
-                             (25, 25, 287.5, 100), 2)
+            # pygame.draw.rect(self.sidebar, (255, 0, 0),
+            #                  (25, 25, 287.5, 100), 2)
 
             # money
-            pygame.draw.rect(self.sidebar, (255, 0, 0),
-                             (337.5, 25, 200, 100), 2)
-
-
+            # pygame.draw.rect(self.sidebar, (0, 0, 0),
+            #                  (337.5, 25, 200, 100), 2)
 
             if time_to_move:
                 pixels_moved += 1
@@ -372,19 +381,7 @@ class Game:
                             curr_mode += 1
                         toggle_mode.next_img()
                         self.mode = select_modes[curr_mode]
-                        print(self.mode)
-
-                #print(actual_mouse_pos)
-
-                #print(next_turn.is_within(actual_mouse_pos))
-                if event.type == pygame.KEYUP and pixels_moved == 0:
-                    if event.key == pygame.K_n:
-                        pass
-                    if event.key == pygame.K_s:
-                        pass
-                    if event.key == pygame.K_a:
-                        pass
-                    if event.key == pygame.K_r:
+                    elif expand_plot.is_within(actual_mouse_pos):
                         if self.stage < 10 and self.money >= self.expand_prices[self.stage]:
                             self.money -= self.expand_prices[self.stage]
                             self.stage += 1
@@ -393,17 +390,13 @@ class Game:
                             self.game_display = pygame.Surface(
                                 (self.resolution, self.resolution))
 
-                    # CHANGE MODE TO FENCE or SELECT or FEED: temp actuation,
-                    # will be a button
-                    if event.key == pygame.K_k:
-                        self.mode = 'fence'
-                    elif event.key == pygame.K_l:
-                        self.mode = 'select'
-                    elif event.key == pygame.K_f:
-                        self.mode = 'feed'
-
-            text_surface = self.my_font.render(str(self.money), False, (0, 0, 0))
+            text_surface = self.my_font.render('$' + str(self.money), False, (0, 0, 0))
             self.sidebar.blit(text_surface, (345, 50))
+            if self.stage < 10:
+                text_surface = self.my_font.render('$' + str(self.expand_prices[self.stage]), False, (0, 0, 0))
+            else:
+                text_surface = self.my_font.render('Upgraded!', False, (0, 0, 0))
+            self.sidebar.blit(text_surface, (expand_plot.x + 10, expand_plot.y + 40))
             self.screen.blit(
                 pygame.transform.scale(self.game_display, (720, 720)), (0, 0))
             self.screen.blit(self.sidebar, (720, 0))

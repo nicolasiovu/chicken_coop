@@ -79,12 +79,13 @@ class Tilemap:
                                       tile['pos'][1] * self.tile_size - offset[1]))
 
     def place_fence(self, pos, f_type):
-        loc = str(pos[0]) + ';' + str(pos[1])
-        if loc in self.tilemap:
-            tile = self.tilemap[loc]
-            if tile['fence'][f_type] == 0:
-                tile['fence'][f_type] = 1
-                self.game.money -= 5
+        if self.game.money >= 5:
+            loc = str(pos[0]) + ';' + str(pos[1])
+            if loc in self.tilemap:
+                tile = self.tilemap[loc]
+                if tile['fence'][f_type] == 0:
+                    tile['fence'][f_type] = 1
+                    self.game.money -= 5
 
     def delete_fence(self, pos, f_type):
         loc = str(pos[0]) + ';' + str(pos[1])
@@ -95,12 +96,13 @@ class Tilemap:
                 self.game.money += 3
 
     def place_feeder(self, pos):
-        loc = str(pos[0]) + ';' + str(pos[1])
-        if loc in self.tilemap:
-            tile = self.tilemap[loc]
-            if tile['has_feeder'] == 0 and not tile['chickens'] and tile['has_egg'] == 0:
-                tile['has_feeder'] = 1
-                self.game.money -= 15
+        if self.game.money >= 15:
+            loc = str(pos[0]) + ';' + str(pos[1])
+            if loc in self.tilemap:
+                tile = self.tilemap[loc]
+                if tile['has_feeder'] == 0 and not tile['chickens'] and tile['has_egg'] == 0:
+                    tile['has_feeder'] = 1
+                    self.game.money -= 15
 
     def delete_feeder(self, pos):
         loc = str(pos[0]) + ';' + str(pos[1])
@@ -181,7 +183,7 @@ class Tilemap:
                 loc = str(x) + ';' + str(y)
                 if loc in self.tilemap:
                     tile = self.tilemap[loc]
-                    if len(tile['chickens']) >= 3:
+                    if len(tile['chickens']) > 3:
                         for chicken in tile['chickens']:
                             if chicken.type == 'chicken':
                                 if chicken in self.game.chickens:
