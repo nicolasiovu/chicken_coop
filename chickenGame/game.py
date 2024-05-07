@@ -39,6 +39,7 @@ class Game:
             'buy2': load_image('buttons/buy2.png'),
             'moneyshow': load_image('buttons/moneyshow.png'),
             'moneyshow2': load_image('buttons/moneyshow2.png'),
+            'newnext': load_image('new_buttons/next.png'),
             'nextbutton': load_image('buttons/nextbutton.png'),
             'nextbutton2': load_image('buttons/nextbutton2.png'),
             'expand': load_image('buttons/expand.png'),
@@ -101,7 +102,7 @@ class Game:
         pixels_moved = 0
         size_factor = 720 / self.resolution
         toggle_temp = ['toggle0', 'toggle1', 'toggle2']
-        next_turn = Button(self, "press", False, 25, 600, 200, 100, 'nextbutton2')
+        next_turn = Button(self, "press", False, 25, 585, 148, 116, 'newnext')
         expand_plot = Button(self, 'press', True, 325, 155, 200, 100, 'expand')
         money_display = Button(self, "press", False, 338, 25, 200, 100, 'moneyshow2')
         buy_chicken = Button(self, "press", False, 250, 600, 288 / 2, 100, 'buy2')
@@ -302,7 +303,7 @@ class Game:
                             mouse_timer = 30
                             self.v_displacement = 4
 
-                if event.type == pygame.MOUSEBUTTONUP and pygame.mouse.get_pos()[0] < 720:
+                if event.type == pygame.MOUSEBUTTONUP and pygame.mouse.get_pos()[0] < 720 and not time_to_move:
                     if self.mode == 'fence':
                         if event.button == 1:
                             pos = (int(mouse_pos[0] // self.tilemap.tile_size),
@@ -330,8 +331,8 @@ class Game:
                                         pos[1] in range(egg.pos[1], egg.pos[1] + 16):
                                     egg.sell()
 
-                if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
-                    if next_turn.is_within(actual_mouse_pos) and pixels_moved == 0:
+                if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0] and not time_to_move:
+                    if next_turn.is_within(actual_mouse_pos):
                         time_to_move = True
                         for egg in self.eggs:
                             if egg.timer.progress == 3:
@@ -339,16 +340,16 @@ class Game:
                             else:
                                 egg.timer.next_img()
                         for chicken in self.chickens:
-                            chicken.movement = self.move_chicken(chicken)
-                            if chicken.movement != (0, 0):
+                            chicken.movement = list(self.move_chicken(chicken))
+                            if chicken.movement != [0, 0]:
                                 pos = (int(chicken.pos[0] // self.tilemap.tile_size),
                                        int(chicken.pos[1] // self.tilemap.tile_size))
                                 self.tilemap.remove_chicken(pos, chicken)
                             if chicken.fertile and chicken.timer.progress == 3:
                                 chicken.lay_egg()
                         for rooster in self.roosters:
-                            rooster.movement = self.move_chicken(rooster)
-                            if rooster.movement != (0, 0):
+                            rooster.movement = list(self.move_chicken(rooster))
+                            if rooster.movement != [0, 0]:
                                 pos = (int(rooster.pos[0] // self.tilemap.tile_size),
                                        int(rooster.pos[1] // self.tilemap.tile_size))
                                 self.tilemap.remove_chicken(pos, rooster)

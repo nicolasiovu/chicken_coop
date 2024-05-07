@@ -31,13 +31,12 @@ class PhysicsEntity:
                           movement[1] + self.velocity[1])
         self.pos[0] += frame_movement[0]
         self.pos[1] += frame_movement[1]
-
         if movement[0] > 0:
             self.flip = False
         if movement[0] < 0:
             self.flip = True
 
-        self.last_movement = movement
+        self.last_movement = list(movement)
 
         self.animation.update()
 
@@ -130,8 +129,8 @@ class Chicken(PhysicsEntity):
             elif x == 4:
                 self.set_action('idle_down')
         super().update(movement=movement)
-        self.timer.update(self.movement)
-        self.hunger_bar.update(self.movement)
+        self.timer.update(tuple(movement))
+        self.hunger_bar.update(tuple(movement))
 
     def fertilized(self):
         self.fertile = True
@@ -185,8 +184,8 @@ class Rooster(PhysicsEntity):
             elif x == 4:
                 self.set_action('idle_down')
         super().update(movement=movement)
-        self.timer.update(self.movement)
-        self.hunger_bar.update(self.movement)
+        self.timer.update(tuple(movement))
+        self.hunger_bar.update(tuple(movement))
 
     def fertilize(self):
         self.fertile = False
