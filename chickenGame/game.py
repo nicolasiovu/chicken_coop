@@ -106,7 +106,7 @@ class Game:
         pixels_moved = 0
         size_factor = 720 / self.resolution
         next_turn = Button(self, "press", False, 25, 585, 148, 116, 'newnext')
-        expand_plot = Button(self, 'press', False, 285, 155, 264, 108, 'expand')
+        expand_plot = Button(self, 'press', False, 280, 155, 264, 108, 'expand')
         money_display = Button(self, "press", False, 338, 25, 200, 100, 'newmoneyshow')
         buy_chicken = Button(self, "press", False, 185, 600, 177, 87, 'newbuy')
         buy_rooster = Button(self, "press", False, 362, 600, 177, 87, None)
