@@ -13,7 +13,8 @@ class Game:
         pygame.init()
         pygame.display.set_caption('chicken game')
         pygame.font.init()
-        self.my_font = pygame.font.SysFont('Comic Sans MS', 30)
+        self.my_font1 = pygame.font.SysFont('Comic Sans MS', 18, True)
+        self.my_font2 = pygame.font.SysFont('Comic Sans MS', 25, True)
         self.screen = pygame.display.set_mode((1280, 720))
         self.game_display = pygame.Surface((60, 60), pygame.SRCALPHA)
         self.sidebar = pygame.Surface((560, 720), pygame.SRCALPHA)
@@ -37,17 +38,20 @@ class Game:
             'sidebar_back': load_image('sidebar.png'),
             'buy': load_image('buttons/buy.png'),
             'buy2': load_image('buttons/buy2.png'),
+            'newbuy': load_image('new_buttons/buy.png'),
             'moneyshow': load_image('buttons/moneyshow.png'),
             'moneyshow2': load_image('buttons/moneyshow2.png'),
+            'newmoneyshow': load_image('new_buttons/moneyshow.png'),
             'newnext': load_image('new_buttons/next.png'),
             'nextbutton': load_image('buttons/nextbutton.png'),
             'nextbutton2': load_image('buttons/nextbutton2.png'),
-            'expand': load_image('buttons/expand.png'),
+            'expand': load_image('new_buttons/expand.png'),
             'title': load_image('buttons/title.png'),
             'chicken': load_image('entities/chicken.png'),
             'toggle0': load_image('buttons/toggle_mode2/toggle0.png'),
             'toggle1': load_image('buttons/toggle_mode2/toggle1.png'),
             'toggle2': load_image('buttons/toggle_mode2/toggle2.png'),
+            'toggle': load_images('new_buttons/toggle_mode'),
             'chicken/idle_down': Animation(
                 load_images('entities/chicken/idle_down')),
             'chicken/idle_right': Animation(
@@ -101,14 +105,13 @@ class Game:
         time_to_move = False
         pixels_moved = 0
         size_factor = 720 / self.resolution
-        toggle_temp = ['toggle0', 'toggle1', 'toggle2']
         next_turn = Button(self, "press", False, 25, 585, 148, 116, 'newnext')
-        expand_plot = Button(self, 'press', True, 325, 155, 200, 100, 'expand')
-        money_display = Button(self, "press", False, 338, 25, 200, 100, 'moneyshow2')
-        buy_chicken = Button(self, "press", False, 250, 600, 288 / 2, 100, 'buy2')
-        buy_rooster = Button(self, "press", False, 250 + 144, 600, 288 / 2, 100, None)
+        expand_plot = Button(self, 'press', False, 285, 155, 264, 108, 'expand')
+        money_display = Button(self, "press", False, 338, 25, 200, 100, 'newmoneyshow')
+        buy_chicken = Button(self, "press", False, 185, 600, 177, 87, 'newbuy')
+        buy_rooster = Button(self, "press", False, 362, 600, 177, 87, None)
         # title_display = Button(self, "press", False, 25, 25, 288, 100, 'title')
-        toggle_mode = Button(self, "toggle", True, 25, 155, 288, 100, toggle_temp)
+        toggle_mode = Button(self, "toggle", False, 25, 155, 222, 174, self.assets['toggle'])
         self.buttons.append(next_turn)
         self.buttons.append(expand_plot)
         self.buttons.append(money_display)
@@ -391,13 +394,15 @@ class Game:
                             self.game_display = pygame.Surface(
                                 (self.resolution, self.resolution))
 
-            text_surface = self.my_font.render('$' + str(self.money), False, (0, 0, 0))
-            self.sidebar.blit(text_surface, (345, 50))
+            text_surface = self.my_font1.render('$' + str(self.money), False, (120, 0, 0))
+            self.sidebar.blit(text_surface, (360, 80))
+            text_surface = self.my_font1.render('build 1.0', False, (0, 0, 0))
+            self.sidebar.blit(text_surface, (480, 695))
             if self.stage < 10:
-                text_surface = self.my_font.render('$' + str(self.expand_prices[self.stage]), False, (0, 0, 0))
+                text_surface = self.my_font2.render('$' + str(self.expand_prices[self.stage]), False, (120, 0, 0))
             else:
-                text_surface = self.my_font.render('Upgraded!', False, (0, 0, 0))
-            self.sidebar.blit(text_surface, (expand_plot.x + 10, expand_plot.y + 40))
+                text_surface = self.my_font2.render('Upgraded!', False, (120, 0, 0))
+            self.sidebar.blit(text_surface, (expand_plot.x + 65, expand_plot.y + 50))
             self.screen.blit(
                 pygame.transform.scale(self.game_display, (720, 720)), (0, 0))
             self.screen.blit(self.sidebar, (720, 0))

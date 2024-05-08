@@ -17,9 +17,9 @@ class Button:
             if isinstance(img, str):
                 self.img = self.game.assets[img]
             elif isinstance(img, list):
-                self.img = self.game.assets[img[0]]
-                self.imge = img[0]
-                self.imges = img
+                self.img = img[0]
+                self.current_image = 0
+                self.images = img
         else:
             self.img = None
 
@@ -44,13 +44,8 @@ class Button:
                     return False
 
     def next_img(self):
-        length = len(self.imges) - 1
-        pos = 0
-        if self.imge in self.imges:
-            pos = self.imges.index(self.imge)
-        if pos < length:
-            self.imge = self.imges[pos+1]
-            self.img = self.game.assets[self.imges[pos+1]]
-        elif pos == length:
-            self.imge = self.imges[0]
-            self.img = self.game.assets[self.imges[0]]
+        length = len(self.images) - 1
+        self.current_image += 1
+        if self.current_image > length:
+            self.current_image = 0
+        self.img = self.images[self.current_image]
