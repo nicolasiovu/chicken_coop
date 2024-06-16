@@ -102,6 +102,7 @@ class Chicken(PhysicsEntity):
         self.fertile = fertile
         self.hunger_bar = HungerBar(game, (pos[0] - 2, pos[1] - 2),
                                     game.assets['hunger'], (20, 20))
+        self.level = 1
 
     def update(self, movement=(0, 0)):
         if movement[0] != 0:

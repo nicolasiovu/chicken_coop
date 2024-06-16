@@ -5,7 +5,7 @@ import random
 
 from scripts.utils import load_image, load_images, Animation
 from scripts.entities import PhysicsEntity, Chicken, Rooster
-from scripts.ui import Button
+from scripts.ui import Button, SelectionBox
 from scripts.tilemap import Tilemap
 
 
@@ -77,10 +77,20 @@ class Game:
                 load_images('entities/rooster/run_down')),
             'rooster/run_up': Animation(load_images('entities/rooster/run_up')),
             'egg/0': load_image('entities/egg/0.png'),
-            'timers/timer': load_images('entities/timers/timer')
+            'timers/timer': load_images('entities/timers/timer'),
+            'selected': load_image('selected.png'),
+            'selections': load_image('selectionbox.png'),
+            'select_chicken': load_image('new_buttons/select_chicken.png'),
+            'select_rooster': load_image('new_buttons/select_rooster.png'),
+            'select_egg': load_image('new_buttons/select_egg.png')
         }
 
         self.selected_fence = 0
+
+        self.selection_box = SelectionBox(self, self.assets['selections'])
+
+        self.selected_entities = []
+        self.select_pos = None
 
         self.movement = [False, False, False, False]
 
@@ -111,14 +121,12 @@ class Game:
         money_display = Button(self, "press", False, 338, 25, 200, 100, 'newmoneyshow')
         buy_chicken = Button(self, "press", False, 185, 600, 177, 87, 'newbuy')
         buy_rooster = Button(self, "press", False, 362, 600, 177, 87, None)
-        # title_display = Button(self, "press", False, 25, 25, 288, 100, 'title')
         toggle_mode = Button(self, "toggle", False, 25, 155, 222, 174, self.assets['toggle'])
         self.buttons.append(next_turn)
         self.buttons.append(expand_plot)
         self.buttons.append(money_display)
         self.buttons.append(buy_chicken)
         self.buttons.append(buy_rooster)
-        # self.buttons.append(title_display)
         self.buttons.append(toggle_mode)
         mouse_timer = 0
 
@@ -153,10 +161,6 @@ class Game:
                 if button.moveable:
                     button.render(self.sidebar, self.v_displacement)
 
-            # pygame.draw.rect(self.sidebar, (0, 0, 1),
-            #                  (0, 0, 560, 140), 0)
-            # pygame.draw.rect(self.sidebar, (0, 0, 1),
-            #                  (0, 580, 560, 140), 0)
             for button in self.buttons:
                 if button.moveable:
                     pass
@@ -167,22 +171,6 @@ class Game:
             mouse_pos = (mouse_pos[0] / size_factor, mouse_pos[1] / size_factor)
             tile_pos = (int((mouse_pos[0]) // self.tilemap.tile_size),
                         int((mouse_pos[1]) // self.tilemap.tile_size))
-
-            # outlines for button implementation
-            # next button
-            # pygame.draw.rect(self.sidebar, (0, 0, 0),
-            #                  (25, 600, 200, 100), 2)
-            # buy rooster/chicken button (split in half)
-            # pygame.draw.rect(self.sidebar, (0, 0, 0),
-            #                  (250, 600, 287.5, 100), 2)
-
-            # stats box (like how many roosters you have and chickens)
-            # pygame.draw.rect(self.sidebar, (255, 0, 0),
-            #                  (25, 25, 287.5, 100), 2)
-
-            # money
-            # pygame.draw.rect(self.sidebar, (0, 0, 0),
-            #                  (337.5, 25, 200, 100), 2)
 
             if time_to_move:
                 pixels_moved += 1
@@ -327,15 +315,33 @@ class Game:
                                    int(mouse_pos[1] // self.tilemap.tile_size))
                             self.tilemap.delete_feeder(pos)
                     elif self.mode == 'select':
-                        if event.button == 1:
+                        interacting = False
+                        for button in self.selection_box.buttons:
+                            if button.is_within_onscreen(actual_mouse_pos):
+                                interacting = True
+                        if event.button == 1 and not interacting:
+                            self.selection_box.clear_entities()
                             pos = (int(mouse_pos[0]),
                                    int(mouse_pos[1]))
+                            self.select_pos = tile_pos
                             for egg in self.eggs:
                                 if pos[0] in range(egg.pos[0], egg.pos[0] + 16) and \
                                         pos[1] in range(egg.pos[1], egg.pos[1] + 16):
-                                    egg.sell()
+                                    self.selection_box.add_entity(egg)
+                            for chicken in self.chickens:
+                                if pos[0] in range(chicken.pos[0], chicken.pos[0] + 16) and \
+                                        pos[1] in range(chicken.pos[1], chicken.pos[1] + 16):
+                                    self.selection_box.add_entity(chicken)
+                            for rooster in self.roosters:
+                                if pos[0] in range(rooster.pos[0], rooster.pos[0] + 16) and \
+                                        pos[1] in range(rooster.pos[1], rooster.pos[1] + 16):
+                                    self.selection_box.add_entity(rooster)
 
                 if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0] and not time_to_move:
+                    if self.selection_box.entities and self.select_pos:
+                        for button in self.selection_box.buttons:
+                            if button.is_within_onscreen(actual_mouse_pos):
+                                self.selection_box.get_button_entity(button.index)
                     if next_turn.is_within(actual_mouse_pos):
                         time_to_move = True
                         for egg in self.eggs:
@@ -357,6 +363,8 @@ class Game:
                                 pos = (int(rooster.pos[0] // self.tilemap.tile_size),
                                        int(rooster.pos[1] // self.tilemap.tile_size))
                                 self.tilemap.remove_chicken(pos, rooster)
+                        self.selection_box.clear_entities()
+                        self.select_pos = None
                     elif buy_chicken.is_within(actual_mouse_pos):
                         if self.money - 8 >= 0:
                             possible_places = self.tilemap.spawn_chicken(self.game_display)
@@ -368,6 +376,8 @@ class Game:
                                 self.chickens.append(new_chicken)
                                 self.tilemap.chicken_here(selected_place['pos'], new_chicken)
                                 self.money -= 8
+                                self.selection_box.clear_entities()
+                                self.select_pos = None
                     elif buy_rooster.is_within(actual_mouse_pos):
                         if self.money - 12 >= 0:
                             possible_places = self.tilemap.spawn_chicken(self.game_display)
@@ -379,6 +389,8 @@ class Game:
                                 self.roosters.append(new_rooster)
                                 self.tilemap.chicken_here(selected_place['pos'], new_rooster)
                                 self.money -= 12
+                                self.selection_box.clear_entities()
+                                self.select_pos = None
                     elif toggle_mode.is_within(actual_mouse_pos):
                         if select_modes.index(self.mode) == len(select_modes) - 1:
                             curr_mode = 0
@@ -386,6 +398,8 @@ class Game:
                             curr_mode += 1
                         toggle_mode.next_img()
                         self.mode = select_modes[curr_mode]
+                        self.selection_box.clear_entities()
+                        self.select_pos = None
                     elif expand_plot.is_within(actual_mouse_pos):
                         if self.stage < 10 and self.money >= self.expand_prices[self.stage]:
                             self.money -= self.expand_prices[self.stage]
@@ -399,6 +413,10 @@ class Game:
             self.sidebar.blit(text_surface, (360, 80))
             text_surface = self.my_font1.render('build 1.0', False, (0, 0, 0))
             self.sidebar.blit(text_surface, (480, 695))
+            if self.selection_box.entities and self.select_pos:
+                self.game_display.blit(self.assets['selected'],
+                                       (self.select_pos[0] * self.tilemap.tile_size,
+                                       self.select_pos[1] * self.tilemap.tile_size))
             if self.stage < 10:
                 text_surface = self.my_font2.render('$' + str(self.expand_prices[self.stage]), False, (120, 0, 0))
             else:
@@ -407,6 +425,10 @@ class Game:
             self.screen.blit(
                 pygame.transform.scale(self.game_display, (720, 720)), (0, 0))
             self.screen.blit(self.sidebar, (720, 0))
+            if self.selection_box.entities and self.select_pos:
+                self.screen.blit(self.selection_box.img, (520, 520))
+                for button in self.selection_box.buttons:
+                    button.render(self.screen)
 
             pygame.display.update()
             self.clock.tick(60)
