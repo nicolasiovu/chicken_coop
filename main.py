@@ -91,6 +91,7 @@ class Game:
 
         self.selected_entities = []
         self.select_pos = None
+        self.current_selection = None
 
         self.movement = [False, False, False, False]
 
@@ -341,7 +342,8 @@ class Game:
                     if self.selection_box.entities and self.select_pos:
                         for button in self.selection_box.buttons:
                             if button.is_within_onscreen(actual_mouse_pos):
-                                self.selection_box.get_button_entity(button.index)
+                                self.current_selection = self.selection_box.get_button_entity(button.index)
+                                break
                     if next_turn.is_within(actual_mouse_pos):
                         time_to_move = True
                         for egg in self.eggs:

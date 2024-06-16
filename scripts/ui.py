@@ -77,7 +77,6 @@ class SelectionBox:
         self.entities.append(entity)
 
     def get_button_entity(self, index):
-        print('selected' + self.entities[index].type)
         return self.entities[index]
 
     def clear_entities(self):

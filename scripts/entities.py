@@ -95,14 +95,15 @@ class Timer:
 
 
 class Chicken(PhysicsEntity):
-    def __init__(self, game, pos, size, fertile=False):
+    def __init__(self, game, pos, size, fertile=False, genetics=False):
         super().__init__(game, 'chicken', pos, size)
         self.timer = Timer(game, (pos[0] - 2, pos[1] - 2),
                            game.assets['timer'], (20, 20))
         self.fertile = fertile
         self.hunger_bar = HungerBar(game, (pos[0] - 2, pos[1] - 2),
                                     game.assets['hunger'], (20, 20))
-        self.level = 1
+        self.egg_quality = 1
+        self.pass_genetics = genetics
 
     def update(self, movement=(0, 0)):
         if movement[0] != 0:
@@ -138,7 +139,7 @@ class Chicken(PhysicsEntity):
 
     def lay_egg(self):
         self.game.eggs.append(Egg(self.game, '0', self.pos, (16, 16),
-                                  self.game.assets['egg/0']))
+                                  self.game.assets['egg/0'], self.egg_quality))
         loc = (int((self.pos[0]) // self.game.tilemap.tile_size),
                int((self.pos[1]) // self.game.tilemap.tile_size))
         loc = str(loc[0]) + ';' + str(loc[1])
@@ -197,13 +198,14 @@ class Rooster(PhysicsEntity):
 
 
 class Egg:
-    def __init__(self, game, e_type, pos, size, img):
+    def __init__(self, game, e_type, pos, size, img, level):
         self.game = game
         self.type = e_type
         self.pos = list(pos)
         self.size = size
         self.img = img
         self.timer = Timer(game, (pos[0] - 2, pos[1] - 2), game.assets['timer'], (20, 20))
+        self.level = level
 
     def render(self, surface):
         surface.blit(self.img, self.pos)
@@ -224,4 +226,4 @@ class Egg:
         self.game.eggs.remove(self)
         loc = str(loc[0]) + ';' + str(loc[1])
         self.game.tilemap.tilemap[loc]['has_egg'] = 0
-        self.game.money += 6
+        self.game.money += 3 * (2 ** self.level)
